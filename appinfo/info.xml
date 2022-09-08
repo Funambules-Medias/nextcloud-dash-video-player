@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<info xmlns:xsi= "http://www.w3.org/2001/XMLSchema-instance"
+	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>dashvideoplayer</id>
+    <name>Dash Video Player</name>
+    <summary>MPEG-DASH video player</summary>
+    <description>Reproduces mpeg-dash (mpd) video files</description>
+    <version>0.0.1</version>
+    <licence>agpl</licence>
+    <author>Daniel Figueroa J</author>
+    <namespace>Dashvideoplayer</namespace>
+    <types>
+        <filesystem />
+    </types>
+    <category>files</category>
+    <category>multimedia</category>
+    <website>https://github.com/pawelrojek/nextcloud-drawio/</website>
+    <bugs>https://github.com/pawelrojek/nextcloud-drawio/issues</bugs>
+    <repository type="git">https://github.com/pawelrojek/nextcloud-drawio.git</repository>
+    <screenshot small-thumbnail="https://raw.githubusercontent.com/pawelrojek/nextcloud-drawio/master/screenshots/drawio_integration_sm.png">https://raw.githubusercontent.com/pawelrojek/nextcloud-drawio/master/screenshots/drawio_integration.png</screenshot>
+    <dependencies>
+        <nextcloud min-version="11" max-version="24"/>
+    </dependencies>
+    <settings>
+        <admin>OCA\Dashvideoplayer\AdminSettings</admin>
+    </settings>
+    <repair-steps>
+        <install>
+            <step>OCA\Dashvideoplayer\Migration\RegisterMimeType</step>
+        </install>
+        <post-migrate>
+            <step>OCA\Dashvideoplayer\Migration\RegisterMimeType</step>
+        </post-migrate>
+        <uninstall>
+            <step>OCA\Dashvideoplayer\Migration\UnregisterMimeType</step>
+        </uninstall>
+    </repair-steps>       
+</info>
