@@ -14,10 +14,10 @@
     </types>
     <category>files</category>
     <category>multimedia</category>
-    <website>https://github.com/pawelrojek/nextcloud-drawio/</website>
-    <bugs>https://github.com/pawelrojek/nextcloud-drawio/issues</bugs>
-    <repository type="git">https://github.com/pawelrojek/nextcloud-drawio.git</repository>
-    <screenshot small-thumbnail="https://raw.githubusercontent.com/pawelrojek/nextcloud-drawio/master/screenshots/drawio_integration_sm.png">https://raw.githubusercontent.com/pawelrojek/nextcloud-drawio/master/screenshots/drawio_integration.png</screenshot>
+    <website>https://github.com/Funambules-Medias/nextcloud-dash-video-player</website>
+    <bugs>https://github.com/Funambules-Medias/nextcloud-dash-video-player/issues</bugs>
+    <repository type="git">https://github.com/Funambules-Medias/nextcloud-dash-video-player.git</repository>
+    <screenshot small-thumbnail="https://funambulesmedias.org/wp-content/uploads/logo-blanc-fond-transparent-441x321.png">https://funambulesmedias.org/wp-content/uploads/logo-blanc-fond-transparent-441x321.png</screenshot>
     <dependencies>
         <nextcloud min-version="11" max-version="24"/>
     </dependencies>
