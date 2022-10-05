@@ -18,9 +18,9 @@
         fileId: fileId
       }
     );
-    /*var features =
-       "resizable=yes,status=no,scroll=no,help=no, center= yes,width=800,height=600,menubar=no,directories=no,location=no,modal=yes";     
-     window.open(url, "Dash Player", "width=800, height=600");*/
+    
+     //window.open(url, "Dash Player", "width=800, height=600");
+     //return
 
     // create div element
     var divModalMaskExists = document.getElementById("divDashPlayerModal");
