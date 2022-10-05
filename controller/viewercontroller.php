@@ -154,10 +154,24 @@ class ViewerController extends Controller
         //$videoUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$baseUri$relativePath";
         $videoUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$baseUri";
 
+        if (!function_exists('str_contains')) {
+            function str_contains(string $haystack, string $needle)
+            {
+                return empty($needle) || strpos($haystack, $needle) !== false;
+            }
+        }
+
+        $coverUrl = "";
+        if (str_contains($videoUrl, 'mpd'))
+            $coverUrl = str_replace("mpd", "jpeg", $videoUrl);
+        if (str_contains($videoUrl, 'm3u'))
+            $coverUrl = str_replace("m3u", "jpeg", $videoUrl);
+
         $params = [
             "fileId" => $fileId,
             "filePath" => $filePath,
             "videoUrl" => $videoUrl,
+            "coverUrl" => $coverUrl,
             "extra" => $relativePath,
             "shareToken" => $shareToken,
         ];

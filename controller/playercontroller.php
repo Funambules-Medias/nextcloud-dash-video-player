@@ -110,10 +110,27 @@ class PlayerController extends Controller
 
         $baseUri = \OC::$WEBROOT . '/remote.php/webdav';
         $videoUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$baseUri$relativePath";
-       
+
+        if (!function_exists('str_contains')) {
+            function str_contains(string $haystack, string $needle)
+            {
+                return empty($needle) || strpos($haystack, $needle) !== false;
+            }
+        }
+
+        $coverUrl = "";
+        if (str_contains($videoUrl, 'mpd'))
+        $coverUrl = str_replace("mpd", "jpeg", $videoUrl);
+        if (str_contains($videoUrl, 'm3u'))
+        $coverUrl = str_replace("m3u",
+            "jpeg",
+            $videoUrl
+        );
+
         $params = [
             "fileId" => $fileId,  
             "videoUrl" => $videoUrl,
+            "coverUrl" => $coverUrl,
         ];
        
 
