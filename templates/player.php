@@ -11,9 +11,15 @@ script("dashvideoplayer", "shaka-player.ui");
 </div>
 
 <script type="text/javascript" nonce="<?php p(base64_encode($_["requesttoken"])) ?>" defer>
-    const manifestUri = '<?php p($videoUrl) ?>'
-    async function init() {
-        // When using the UI, the player is made automatically by the UI object.
+    window.addEventListener('DOMContentLoaded', function() {    
+        function initApp() {
+           console.log("DASH PLAYER WILL START");
+        }
+        initApp();
+    });
+
+    /*const manifestUri = '<?php p($videoUrl) ?>'
+    async function init() {    
         const video = document.getElementById('video');
         const ui = video['ui'];
         const config = {
@@ -82,5 +88,5 @@ script("dashvideoplayer", "shaka-player.ui");
     document.addEventListener('shaka-ui-loaded', init);
     // Listen to the custom shaka-ui-load-failed event, in case Shaka Player fails
     // to load (e.g. due to lack of browser support).
-    document.addEventListener('shaka-ui-load-failed', initFailed);
+    document.addEventListener('shaka-ui-load-failed', initFailed);*/
 </script>

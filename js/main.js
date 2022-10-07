@@ -19,8 +19,8 @@
       }
     );
     
-     /*window.open(url, "Dash Player", "width=800, height=600");
-     return*/
+     window.open(url, "Dash Player", "width=1200, height=600");
+     return
 
     // create div element
     var divModalMaskExists = document.getElementById("divDashPlayerModal");
