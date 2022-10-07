@@ -8,19 +8,22 @@ class RegisterMimeType extends MimeTypeMigration
 {
     public function getName()
     {
-        return 'Register MIME type for .mpd files';
+        return 'Register MIME type for .mpd and m3u8 files';
     }
 
     private function registerForExistingFiles()
     {
-        $mimeTypeId = $this->mimeTypeLoader->getId('application/mpd');
-        $this->mimeTypeLoader->updateFilecache('mpd', $mimeTypeId);
+        $mimeTypeIdMPD = $this->mimeTypeLoader->getId('application/mpd');
+        $this->mimeTypeLoader->updateFilecache('mpd', $mimeTypeIdMPD);
+        $mimeTypeIdM3U8 = $this->mimeTypeLoader->getId('application/m3u8');
+        $this->mimeTypeLoader->updateFilecache('mpd', $mimeTypeIdM3U8);
     }
 
     private function registerForNewFiles()
     {
         $mapping = array(
-            'mpd' => array('application/mpd')
+            'mpd' => array('application/mpd'),
+            'm3u8' => array('application/m3u8')
         );
         $mappingFile = \OC::$configDir . self::CUSTOM_MIMETYPEMAPPING;
 

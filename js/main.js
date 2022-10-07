@@ -19,8 +19,8 @@
       }
     );
     
-     //window.open(url, "Dash Player", "width=800, height=600");
-     //return
+     /*window.open(url, "Dash Player", "width=800, height=600");
+     return*/
 
     // create div element
     var divModalMaskExists = document.getElementById("divDashPlayerModal");
@@ -165,7 +165,10 @@
             }
           });
 
-          if (attr.mime == "application/mpd") {
+          if (
+            attr.mime == "application/mpd" ||
+            attr.mime == "application/m3u8"
+          ) {
             fileList.fileActions.setDefault(attr.mime, "mpdOpen");
           }
         }
@@ -230,7 +233,8 @@ $(document).ready(function () {
       .find("tr[data-type=file]")
       .each(function () {
         if (
-          $(this).attr("data-mime") == "application/mpd" &&
+          ($(this).attr("data-mime") == "application/mpd" ||
+            $(this).attr("data-mime") == "application/m3u8") &&
           $(this).find("div.thumbnail").length > 0
         ) {
           if ($(this).find("div.thumbnail").hasClass("icon-mpd") == false) {

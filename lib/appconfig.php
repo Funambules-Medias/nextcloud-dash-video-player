@@ -1,7 +1,9 @@
 <?php
+
 namespace OCA\Dashvideoplayer;
 
-class AppConfig {
+class AppConfig
+{
     private $appName;
 
     public function __construct($AppName)
@@ -18,13 +20,13 @@ class AppConfig {
         return $this->appName;
     }
 
-     /**
+    /**
      * Additional data about formats
      *
      * @var array
      */
     public $formats = [
-            "mpd" => [ "mime" => "application/mpd", "type" => "video" ]
-        ];
-
+        "mpd" => ["mime" => "application/mpd", "type" => "video"],
+        "m3u8" => ["mime" => "application/m3u8", "type" => "video"]
+    ];
 }
