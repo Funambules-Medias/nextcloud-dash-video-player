@@ -22,13 +22,13 @@ script("dashvideoplayer", "shaka-player.ui");
             if (shaka.Player.isBrowserSupported()) {
                 // Everything looks good!
                 console.log("SHAKA WILL START NOW");
-                initPlayer();
+              
             } else {
                 // This browser does not have the minimum set of APIs we need.
                 console.error('Browser not supported!');
             }
             return;
-            
+
             const video = document.getElementById('video');
             const ui = video['ui'];
             const config = {
