@@ -119,18 +119,22 @@ class PlayerController extends Controller
         }
 
         $coverUrl = "";
-        if (str_contains($videoUrl, 'mpd'))
-        $coverUrl = str_replace("mpd", "jpeg", $videoUrl);
-        if (str_contains($videoUrl, 'm3u'))
-        $coverUrl = str_replace("m3u",
-            "jpeg",
-            $videoUrl
-        );
+        if (str_contains($videoUrl, '.mpd'))
+        $coverUrl = str_replace(".mpd", ".jpeg", $videoUrl);
+        if (str_contains($videoUrl, '.m3u8'))
+        $coverUrl = str_replace(".m3u8",".jpeg",$videoUrl);
+
+        $subtitlesUrl = "";
+        if (str_contains($videoUrl, '.mpd'))
+        $subtitlesUrl = str_replace(".mpd", ".vtt", $videoUrl);
+        if (str_contains($videoUrl, '.m3u8'))
+        $subtitlesUrl = str_replace(".m3u8",".vtt",$videoUrl);
 
         $params = [
             "fileId" => $fileId,  
             "videoUrl" => $videoUrl,
             "coverUrl" => $coverUrl,
+            "subtitlesUrl" => $subtitlesUrl,
         ];
        
 
