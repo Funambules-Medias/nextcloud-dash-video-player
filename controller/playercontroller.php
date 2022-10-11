@@ -120,9 +120,9 @@ class PlayerController extends Controller
 
         $coverUrl = "";
         if (str_contains($videoUrl, '.mpd'))
-        $coverUrl = str_replace(".mpd", ".jpeg", $videoUrl);
+        $coverUrl = str_replace(".mpd", ".jpg", $videoUrl);
         if (str_contains($videoUrl, '.m3u8'))
-        $coverUrl = str_replace(".m3u8",".jpeg",$videoUrl);
+        $coverUrl = str_replace(".m3u8",".jpg",$videoUrl);
 
         $subtitlesUrl = "";
         if (str_contains($videoUrl, '.mpd'))
