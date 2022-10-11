@@ -144,8 +144,7 @@ class PlayerController extends Controller
         $csp->allowInlineScript(true);
         $csp->addAllowedConnectDomain('*');
         $csp->addAllowedImageDomain('*');
-        $csp->addAllowedMediaDomain('*');        
-        $csp->allowedFontDomains('*');        
+        $csp->addAllowedMediaDomain('*');                
         $response->setContentSecurityPolicy($csp);
 
         return $response;
