@@ -145,7 +145,7 @@ class PlayerController extends Controller
         $csp->addAllowedConnectDomain('*');
         $csp->addAllowedImageDomain('*');
         $csp->addAllowedMediaDomain('*');        
-        $csp->allowedFontDomains('fonts.gstatic.com');        
+        $csp->allowedFontDomains('*');        
         $response->setContentSecurityPolicy($csp);
 
         return $response;
