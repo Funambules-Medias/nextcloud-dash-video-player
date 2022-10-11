@@ -16,7 +16,7 @@ class RegisterMimeType extends MimeTypeMigration
         $mimeTypeIdMPD = $this->mimeTypeLoader->getId('application/mpd');
         $this->mimeTypeLoader->updateFilecache('mpd', $mimeTypeIdMPD);
         $mimeTypeIdM3U8 = $this->mimeTypeLoader->getId('application/m3u8');
-        $this->mimeTypeLoader->updateFilecache('mpd', $mimeTypeIdM3U8);
+        $this->mimeTypeLoader->updateFilecache('m3u8', $mimeTypeIdM3U8);
     }
 
     private function registerForNewFiles()
