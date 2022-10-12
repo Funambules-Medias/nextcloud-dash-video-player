@@ -54,7 +54,8 @@ script("dashvideoplayer", "shaka-player.ui");
                 streaming: {
                     bufferingGoal: 10,
                     rebufferingGoal: 5,
-                    bufferBehind: 10
+                    bufferBehind: 5,
+                    lowLatencyMode: true,
                 },
                 manifest: {
                     dash: {
