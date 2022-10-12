@@ -6,7 +6,7 @@ script("dashvideoplayer", "shaka-player.ui");
 
 <div id="app-content">
     <div data-shaka-player-container style="position: absolute; top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; background-color: black;">
-        <video data-shaka-player style="position: absolute; top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; background-color: black;" id="video" poster="<?php p($coverUrl) ?>"></video>
+        <video data-shaka-player autoplay style="position: absolute; top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; background-color: black;" id="video" poster="<?php p($coverUrl) ?>"></video>
     </div>
 </div>
 
