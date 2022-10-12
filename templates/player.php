@@ -52,8 +52,8 @@ script("dashvideoplayer", "shaka-player.ui");
             await player.configure({
                 preferredTextLanguage: 'fr-CA',
                 streaming: {
-                    bufferingGoal: 10,
-                    rebufferingGoal: 5,
+                    bufferingGoal: 120,
+                    rebufferingGoal: 0.5,
                     bufferBehind: 5,
                     lowLatencyMode: true,
                 },
@@ -61,6 +61,10 @@ script("dashvideoplayer", "shaka-player.ui");
                     dash: {
                         ignoreMinBufferTime: true
                     }
+                },
+                abr: {
+                    defaultBandwidthEstimate: 250000,
+                    switchInterval: 4
                 }
             });
             console.log(player.getConfiguration())
