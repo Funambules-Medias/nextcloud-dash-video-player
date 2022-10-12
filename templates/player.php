@@ -63,8 +63,8 @@ script("dashvideoplayer", "shaka-player.ui");
                     }
                 },
                 abr: {
-                    defaultBandwidthEstimate: 250000,
-                    switchInterval: 4
+                    defaultBandwidthEstimate: 50000,
+                    switchInterval: 1
                 }
             });
             console.log(player.getConfiguration())
