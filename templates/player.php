@@ -52,9 +52,9 @@ script("dashvideoplayer", "shaka-player.ui");
             await player.configure({
                 preferredTextLanguage: 'fr-CA',
                 streaming: {
-                    bufferingGoal: 20,
-                    rebufferingGoal: 15,
-                    bufferBehind: 20
+                    bufferingGoal: 10,
+                    rebufferingGoal: 5,
+                    bufferBehind: 10
 
                 }
             });
