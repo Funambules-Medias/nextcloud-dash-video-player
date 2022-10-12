@@ -51,6 +51,12 @@ script("dashvideoplayer", "shaka-player.ui");
             player.setTextTrackVisibility(true);
             await player.configure({
                 preferredTextLanguage: 'fr-CA',
+                streaming: {
+                    bufferingGoal: 20,
+                    rebufferingGoal: 15,
+                    bufferBehind: 20
+
+                }
             });
             console.log(player.getConfiguration())
 
