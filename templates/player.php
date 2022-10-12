@@ -55,7 +55,11 @@ script("dashvideoplayer", "shaka-player.ui");
                     bufferingGoal: 10,
                     rebufferingGoal: 5,
                     bufferBehind: 10
-
+                },
+                manifest: {
+                    dash: {
+                        ignoreMinBufferTime: true
+                    }
                 }
             });
             console.log(player.getConfiguration())
