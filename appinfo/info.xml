@@ -19,7 +19,7 @@
     <repository type="git">https://github.com/Funambules-Medias/nextcloud-dash-video-player.git</repository>
     <screenshot small-thumbnail="https://funambulesmedias.org/wp-content/uploads/logo-blanc-fond-transparent-441x321.png">https://funambulesmedias.org/wp-content/uploads/logo-blanc-fond-transparent-441x321.png</screenshot>
     <dependencies>
-        <nextcloud min-version="11" max-version="24"/>
+        <nextcloud min-version="32" max-version="32"/>
     </dependencies>
     <settings>
         <admin>OCA\Dashvideoplayer\AdminSettings</admin>
