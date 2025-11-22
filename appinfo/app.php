@@ -1,5 +1,4 @@
 <?php
 
-namespace OCA\Dashvideoplayer\AppInfo;
-
-$app = new Application();
+// The application is now bootstrapped via IBootstrap in lib/AppInfo/Application.php
+// and registered in appinfo/info.xml

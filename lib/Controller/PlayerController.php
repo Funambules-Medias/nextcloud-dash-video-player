@@ -1,12 +1,11 @@
 <?php
-namespace OCA\Dashvideoplayer\Controller;
+namespace OCA\Dashvideoplayerv2\Controller;
 
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Controller;
 use OCP\Constants;
 use OCP\Files\IRootFolder;
-use OCP\IL10N;
 use OCP\ILogger;
 use OCP\IRequest;
 use OCP\ISession;
@@ -14,8 +13,10 @@ use OCP\IURLGenerator;
 use OCP\IUserSession;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IManager;
+use OCP\Files\Folder;
+use OCP\Files\NotFoundException;
 
-use OCA\Dashvideoplayer\AppConfig;
+use OCA\Dashvideoplayerv2\AppConfig;
 
 
 class PlayerController extends Controller
@@ -37,7 +38,8 @@ class PlayerController extends Controller
      * @var IManager
      */
     private $shareManager;
-
+    private $config;
+    protected $appName;
 
     /**
      * @param string $AppName - application name
@@ -46,7 +48,9 @@ class PlayerController extends Controller
      * @param IUserSession $userSession - current user session
      * @param IURLGenerator $urlGenerator - url generator service     
      * @param ILogger $logger - logger
-     * @param OCA\Dashvideoplayer\AppConfig $config - app config
+     * @param AppConfig $config - app config
+     * @param IManager $shareManager - share manager
+     * @param ISession $session - session
      */
     public function __construct(
         $AppName,
@@ -61,6 +65,7 @@ class PlayerController extends Controller
     ) {
         parent::__construct($AppName, $request);
 
+        $this->appName = $AppName;
         $this->userSession = $userSession;
         $this->root = $root;
         $this->urlGenerator = $urlGenerator;      
@@ -68,6 +73,8 @@ class PlayerController extends Controller
         $this->config = $config;
         $this->shareManager = $shareManager;
         $this->session = $session;
+        
+        $this->logger->info("PlayerController initialized for app: " . $AppName, ["app" => $AppName]);
     }
 
     /**
@@ -82,73 +89,95 @@ class PlayerController extends Controller
      */
     public function index($fileId, $shareToken = NULL, $filePath = NULL)
     {
-        /*if (empty($shareToken) && !$this->userSession->isLoggedIn()) {
-            $redirectUrl = $this->urlGenerator->linkToRoute("core.login.showLoginForm", [
-                "redirect_url" => $this->request->getRequestUri()
-            ]);
-            return new RedirectResponse($redirectUrl);
-        }*/
+        try {
+            $this->logger->info("PlayerController::index called with fileId: $fileId", ["app" => $this->appName]);
 
-        if ($fileId) {
-            list($file, $error) = $this->getFile($fileId);
-            if (isset($error)) {
-                $this->logger->error("Load: " . $fileId . " " . $error, array("app" => $this->appName));
-                return ["error" => $error];
+            /*if (empty($shareToken) && !$this->userSession->isLoggedIn()) {
+                $redirectUrl = $this->urlGenerator->linkToRoute("core.login.showLoginForm", [
+                    "redirect_url" => $this->request->getRequestUri()
+                ]);
+                return new RedirectResponse($redirectUrl);
+            }*/
+
+            if ($fileId) {
+                list($file, $error) = $this->getFile($fileId);
+                if (isset($error)) {
+                    $this->logger->error("Load: " . $fileId . " " . $error, array("app" => $this->appName));
+                    return new TemplateResponse($this->appName, "error", ["message" => $error]);
+                }
+                
+                $uid = $this->userSession->getUser()->getUID();
+                $baseFolder = $this->root->getUserFolder($uid);
+                
+                // Robust path calculation
+                $filePath = $file->getPath();
+                $userFolderPath = $baseFolder->getPath();
+                
+                if (strpos($filePath, $userFolderPath) === 0) {
+                    // File is inside user folder
+                    $relativePath = substr($filePath, strlen($userFolderPath));
+                } else {
+                    // File might be shared or external, try getRelativePath but catch errors
+                    try {
+                        $relativePath = $baseFolder->getRelativePath($filePath);
+                    } catch (\Exception $e) {
+                        // Fallback: Use the file's internal path if possible, or just the name
+                        $this->logger->warning("Could not get relative path for $filePath: " . $e->getMessage(), ["app" => $this->appName]);
+                        $relativePath = '/' . $file->getName(); // Desperate fallback
+                    }
+                }
+            } else {
+                list($file, $error) = $this->getFileByToken($fileId, $shareToken);
+                if (isset($error)) {
+                     return new TemplateResponse($this->appName, "error", ["message" => $error]);
+                }
+                $relativePath = $file->getPath();
             }
-            $uid = $this->userSession->getUser()->getUID();
-            $baseFolder = $this->root->getUserFolder($uid);
-            $relativePath = $baseFolder->getRelativePath($file->getPath());        
-        } else {
-            list($file, $error) = $this->getFileByToken($fileId, $shareToken);
-            $relativePath = $file->getPath();
+
+            /* 
+            Generate video's web url for the player to use as 'src' attr
+            URL looks like this: http://localhost:8888/nextcloud/remote.php/webdav/directory/somevideofile.mpd
+            */
+
+            $baseUri = $this->urlGenerator->getWebroot() . '/remote.php/webdav';
+            $videoUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$baseUri$relativePath";
+
+            $coverUrl = "";
+            if (strpos($videoUrl, '.mpd') !== false)
+                $coverUrl = str_replace(".mpd", ".jpg", $videoUrl);
+            if (strpos($videoUrl, '.m3u8') !== false)
+                $coverUrl = str_replace(".m3u8",".jpg",$videoUrl);
+
+            $subtitlesUrl = "";
+            if (strpos($videoUrl, '.mpd') !== false)
+                $subtitlesUrl = str_replace(".mpd", ".vtt", $videoUrl);
+            if (strpos($videoUrl, '.m3u8') !== false)
+                $subtitlesUrl = str_replace(".m3u8",".vtt",$videoUrl);
+
+            $params = [
+                "fileId" => $fileId,  
+                "videoUrl" => $videoUrl,
+                "coverUrl" => $coverUrl,
+                "subtitlesUrl" => $subtitlesUrl,
+            ];
+        
+
+            $response = new TemplateResponse($this->appName, "player", $params);
+
+            $csp = new ContentSecurityPolicy();
+            $csp->allowInlineScript(true);
+            $csp->addAllowedConnectDomain('*');
+            $csp->addAllowedImageDomain('*');
+            $csp->addAllowedMediaDomain('*');        
+            $csp->addAllowedFontDomain('*');         
+            $response->setContentSecurityPolicy($csp);
+
+            return $response;
+
+        } catch (\Throwable $e) {
+            $this->logger->error("PlayerController Index Error: " . $e->getMessage() . "\n" . $e->getTraceAsString(), ["app" => $this->appName]);
+            return new TemplateResponse($this->appName, "error", ["message" => "Internal Server Error: " . $e->getMessage()]);
         }
-
-        /* 
-        Generate video's web url for the player to use as 'src' attr
-        URL looks like this: http://localhost:8888/nextcloud/remote.php/webdav/directory/somevideofile.mpd
-        */
-
-        $baseUri = \OC::$WEBROOT . '/remote.php/webdav';
-        $videoUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$baseUri$relativePath";
-
-        if (!function_exists('str_contains')) {
-            function str_contains(string $haystack, string $needle)
-            {
-                return empty($needle) || strpos($haystack, $needle) !== false;
-            }
-        }
-
-        $coverUrl = "";
-        if (str_contains($videoUrl, '.mpd'))
-        $coverUrl = str_replace(".mpd", ".jpg", $videoUrl);
-        if (str_contains($videoUrl, '.m3u8'))
-        $coverUrl = str_replace(".m3u8",".jpg",$videoUrl);
-
-        $subtitlesUrl = "";
-        if (str_contains($videoUrl, '.mpd'))
-        $subtitlesUrl = str_replace(".mpd", ".vtt", $videoUrl);
-        if (str_contains($videoUrl, '.m3u8'))
-        $subtitlesUrl = str_replace(".m3u8",".vtt",$videoUrl);
-
-        $params = [
-            "fileId" => $fileId,  
-            "videoUrl" => $videoUrl,
-            "coverUrl" => $coverUrl,
-            "subtitlesUrl" => $subtitlesUrl,
-        ];
-       
-
-        $response = new TemplateResponse($this->appName, "player", $params);
-
-        $csp = new ContentSecurityPolicy();
-        $csp->allowInlineScript(true);
-        $csp->addAllowedConnectDomain('*');
-        $csp->addAllowedImageDomain('*');
-        $csp->addAllowedMediaDomain('*');        
-        $csp->addAllowedFontDomain('*');         
-        $response->setContentSecurityPolicy($csp);
-
-        return $response;
     }
 
     /**
@@ -193,12 +222,12 @@ class PlayerController extends Controller
                 $files = $node->getById($fileId);
             } catch (\Exception $e) {
                 $this->logger->error("getFileByToken: $fileId " . $e->getMessage(), array("app" => $this->appName));
-                return [NULL, $this->trans->t("Invalid request"), NULL];
+                return [NULL, "Invalid request", NULL];
             }
 
             if (empty($files)) {
                 $this->logger->info("Files not found: $fileId", array("app" => $this->appName));
-                return [NULL, $this->trans->t("File not found"), NULL];
+                return [NULL, "File not found", NULL];
             }
             $file = $files[0];
         } else {
@@ -224,14 +253,14 @@ class PlayerController extends Controller
         }
 
         if (($share->getPermissions() & Constants::PERMISSION_READ) === 0) {
-            return [NULL, $this->trans->t("You do not have enough permissions to view the file"), NULL];
+            return [NULL, "You do not have enough permissions to view the file", NULL];
         }
 
         try {
             $node = $share->getNode();
         } catch (NotFoundException $e) {
             $this->logger->error("getFileByToken error: " . $e->getMessage(), array("app" => $this->appName));
-            return [NULL, $this->trans->t("File not found"), NULL];
+            return [NULL, "File not found", NULL];
         }
 
         return [$node, NULL, $share];
@@ -247,7 +276,7 @@ class PlayerController extends Controller
     private function getShare($shareToken)
     {
         if (empty($shareToken)) {
-            return [NULL, $this->trans->t("FileId is empty")];
+            return [NULL, "FileId is empty"];
         }
 
         $share = null;
@@ -259,7 +288,7 @@ class PlayerController extends Controller
         }
 
         if ($share === NULL || $share === false) {
-            return [NULL, $this->trans->t("You do not have enough permissions to view the file")];
+            return [NULL, "You do not have enough permissions to view the file"];
         }
 
         if (
@@ -267,7 +296,7 @@ class PlayerController extends Controller
             && (!$this->session->exists("public_link_authenticated")
             || $this->session->get("public_link_authenticated") !== (string) $share->getId())
         ) {
-            return [NULL, $this->trans->t("You do not have enough permissions to view the file")];
+            return [NULL, "You do not have enough permissions to view the file"];
         }
 
         return [$share, NULL];

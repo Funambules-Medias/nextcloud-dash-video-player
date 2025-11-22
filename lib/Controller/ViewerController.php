@@ -1,17 +1,22 @@
 <?php
 
-namespace OCA\Dashvideoplayer\Controller;
+namespace OCA\Dashvideoplayerv2\Controller;
 
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\Template\PublicTemplateResponse;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\RedirectResponse;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Controller;
 use OCP\AutoloadNotAllowedException;
 use OCP\Constants;
 use OCP\Files\FileInfo;
 use OCP\Files\IRootFolder;
+use OCP\Files\Folder;
+use OCP\Files\NotFoundException;
+use OCP\Files\NotPermittedException;
 use OCP\IL10N;
 use OCP\ILogger;
 use OCP\IRequest;
@@ -29,7 +34,7 @@ use OCA\Files\Helper;
 use OCA\Files_Versions\Storage;
 use OCA\Viewer\Event\LoadViewer;
 
-use OCA\Dashvideoplayer\AppConfig;
+use OCA\Dashvideoplayerv2\AppConfig;
 
 
 class ViewerController extends Controller
@@ -62,7 +67,7 @@ class ViewerController extends Controller
      * @param IUserSession $userSession - current user session
      * @param IURLGenerator $urlGenerator - url generator service     
      * @param ILogger $logger - logger
-     * @param OCA\Dashvideoplayer\AppConfig $config - app config
+     * @param AppConfig $config - app config
      */
     public function __construct(
         $AppName,

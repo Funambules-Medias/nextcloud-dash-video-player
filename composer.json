@@ -1,5 +1,5 @@
 {
-  "name": "dashvideoplayer",
+  "name": "dashvideoplayerv2",
   "description": "Reproduces mpeg-dash (mpd) video files",
   "type": "nextcloud-app",
   "license": "AGPL-3.0-or-later",
@@ -9,7 +9,7 @@
   },
   "autoload": {
     "psr-4": {
-      "OCA\\Dashvideoplayer\\": "lib/"
+      "OCA\\Dashvideoplayerv2\\": "lib/"
     }
   },
   "config": {

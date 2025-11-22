@@ -1,6 +1,6 @@
 <?php
 
-namespace OCA\Dashvideoplayer;
+namespace OCA\Dashvideoplayerv2;
 
 class AppConfig
 {
@@ -9,9 +9,6 @@ class AppConfig
     public function __construct($AppName)
     {
         $this->appName = $AppName;
-
-        $this->config = \OC::$server->getConfig();
-        $this->logger = \OC::$server->getLogger();
     }
 
 

@@ -1,7 +1,7 @@
 <?php
-style("dashvideoplayer", "controls");
-script("dashvideoplayer", "mux");
-script("dashvideoplayer", "shaka-player.ui");
+style("dashvideoplayerv2", "controls");
+script("dashvideoplayerv2", "mux");
+script("dashvideoplayerv2", "shaka-player.ui");
 ?>
 
 <div id="app-content">

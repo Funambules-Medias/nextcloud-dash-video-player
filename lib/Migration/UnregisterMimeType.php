@@ -1,6 +1,6 @@
 <?php
 
-namespace OCA\Drawio\Migration;
+namespace OCA\Dashvideoplayerv2\Migration;
 
 use OCP\Migration\IOutput;
 
