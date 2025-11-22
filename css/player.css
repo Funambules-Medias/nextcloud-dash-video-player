@@ -8,3 +8,13 @@
     border: 0;
     background-color: black;
 }
+
+/* Fix alignment of progress bar and volume dots */
+.shaka-range-container {
+    margin: 0 6px !important;
+    top: 0 !important;
+}
+
+.shaka-range-element {
+    top: 0 !important;
+}

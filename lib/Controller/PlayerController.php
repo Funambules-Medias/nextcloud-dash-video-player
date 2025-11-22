@@ -139,7 +139,10 @@ class PlayerController extends Controller
             */
 
             $baseUri = $this->urlGenerator->getWebroot() . '/remote.php/webdav';
-            $videoUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$baseUri$relativePath";
+            // Use IRequest to get protocol and host safely, handling proxies if configured in Nextcloud
+            $protocol = $this->request->getServerProtocol();
+            $host = $this->request->getServerHost();
+            $videoUrl = "$protocol://$host$baseUri$relativePath";
 
             $coverUrl = "";
             if (strpos($videoUrl, '.mpd') !== false)
