@@ -80,8 +80,17 @@
         "style",
         "display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; cursor: pointer;"
       );
+      
+      // Close modal when clicking outside the iframe
+      divModalContainer.onclick = function(e) {
+          if (e.target === divModalContainer) {
+            document.getElementById("iframeDashPlayerModal").src = "about:blank";
+            document.getElementById('divDashPlayerModal').style.display = "none";
+          }
+      };
+
       divModalContainer.innerHTML =
-        "<iframe id='iframeDashPlayerModal' width='75%' height='75%' src='" + url + "'></iframe>";
+        "<iframe id='iframeDashPlayerModal' width='75%' height='75%' style='border:0; border-radius: 8px; background-color: black; box-shadow: 0 0 20px rgba(0,0,0,0.5);' src='" + url + "'></iframe>";
 
       // append modal container to modal wrapper
       divModalWrapper.appendChild(divModalContainer);
@@ -233,8 +242,8 @@
                 var target = e.target;
                 
                 // DEBUG: Log click details if inside file list to help debug structure
-                if (target.closest && (target.closest('#fileList') || target.closest('.files-file-list') || target.closest('tbody'))) {
-                    // ... existing debug code ...
+                if (target.closest && (target.closest('#fileList') || target.closest('.files-file-list') || target.closest('tbody') || target.closest('.grid-view'))) {
+                    console.log('DASHVIDEOPLAYERV2: Click inside file list on:', target.tagName, target.className, target);
                 }
 
                 var row = null;
@@ -242,7 +251,7 @@
                 
                 // Walk up to find the file row
                 while (current && current !== document) {
-                    if (current.tagName === 'TR' || (current.classList && current.classList.contains('file-row'))) {
+                    if (current.tagName === 'TR' || (current.classList && current.classList.contains('file-row')) || (current.classList && current.classList.contains('oc-dialog-filepicker__file'))) {
                         row = current;
                         break;
                     }
@@ -252,6 +261,9 @@
                 if (row) {
                     // 1. Get Filename
                     var fileName = row.getAttribute('data-file');
+                    // Strategy: data-cy-files-list-row-name (Vue/Cypress)
+                    if (!fileName) fileName = row.getAttribute('data-cy-files-list-row-name');
+                    
                     if (!fileName) {
                         var nameEl = row.querySelector('.nametext, .innernametext, .name');
                         if (nameEl) fileName = nameEl.innerText;
@@ -260,10 +272,15 @@
                     
                     if (fileName) {
                         fileName = fileName.replace(/[\n\r]+/g, '').trim(); // Clean up whitespace
+                    } else {
+                        console.log('DASHVIDEOPLAYERV2: Could not determine filename for row', row);
                     }
 
                     // 2. Get File ID (The hard part)
                     var fileId = row.getAttribute('data-id');
+                    
+                    // Strategy: data-cy-files-list-row-fileid (Vue/Cypress)
+                    if (!fileId) fileId = row.getAttribute('data-cy-files-list-row-fileid');
                     
                     // Strategy A: Look for data-e2e-file-id (common in Vue)
                     if (!fileId) fileId = row.getAttribute('data-e2e-file-id');
@@ -299,7 +316,7 @@
                         }
                     }
 
-                    if (fileName && (fileName.endsWith('.mpd') || fileName.endsWith('.m3u8'))) {
+                    if (fileName && (fileName.toLowerCase().endsWith('.mpd') || fileName.toLowerCase().endsWith('.m3u8'))) {
                         console.log("DASHVIDEOPLAYERV2: Intercepted click on '" + fileName + "'");
                         e.preventDefault();
                         e.stopPropagation();
