@@ -23,12 +23,11 @@
         const ui = video['ui'];
         const config = {
             'controlPanelElements': [
-                'time_and_duration',
                 'play_pause',
+                'spacer',
+                'time_and_duration',
                 'mute',
                 'volume',
-                'airplay',
-                'cast',
                 'fullscreen',
                 'captions',
                 'quality'
@@ -93,6 +92,9 @@
     function onPlayerError(error) {
         // Handle player error
         console.error('DASHVIDEOPLAYERV2: Error code', error.code, 'object', error);
+        if (error.data) {
+            console.error('DASHVIDEOPLAYERV2: Error data', error.data);
+        }
     }
 
     function onUIErrorEvent(errorEvent) {

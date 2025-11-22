@@ -142,7 +142,16 @@ class PlayerController extends Controller
             // Use IRequest to get protocol and host safely, handling proxies if configured in Nextcloud
             $protocol = $this->request->getServerProtocol();
             $host = $this->request->getServerHost();
-            $videoUrl = "$protocol://$host$baseUri$relativePath";
+            
+            // Encode the path segments to ensure URL safety (handling spaces, etc.)
+            // We use rawurlencode to encode spaces as %20 (not +), and then restore the slashes
+            $encodedRelativePath = str_replace('%2F', '/', rawurlencode($relativePath));
+            
+            $videoUrl = "$protocol://$host$baseUri$encodedRelativePath";
+
+            $this->logger->error("PlayerController Debug: relativePath=" . $relativePath, ["app" => $this->appName]);
+            $this->logger->error("PlayerController Debug: encodedRelativePath=" . $encodedRelativePath, ["app" => $this->appName]);
+            $this->logger->error("PlayerController Debug: videoUrl=" . $videoUrl, ["app" => $this->appName]);
 
             $coverUrl = "";
             if (strpos($videoUrl, '.mpd') !== false)
@@ -168,10 +177,20 @@ class PlayerController extends Controller
 
             $csp = new ContentSecurityPolicy();
             $csp->addAllowedScriptDomain("'unsafe-inline'");
+            $csp->addAllowedScriptDomain('blob:');
+            $csp->addAllowedScriptDomain('data:');
             $csp->addAllowedConnectDomain('*');
+            $csp->addAllowedConnectDomain('blob:');
+            $csp->addAllowedConnectDomain('data:');
             $csp->addAllowedImageDomain('*');
-            $csp->addAllowedMediaDomain('*');        
-            $csp->addAllowedFontDomain('*');         
+            $csp->addAllowedImageDomain('blob:');
+            $csp->addAllowedImageDomain('data:');
+            $csp->addAllowedMediaDomain('*');
+            $csp->addAllowedMediaDomain('blob:');
+            $csp->addAllowedMediaDomain('data:');
+            $csp->addAllowedFontDomain('*');
+            $csp->addAllowedFontDomain('blob:');
+            $csp->addAllowedFontDomain('data:');
             $response->setContentSecurityPolicy($csp);
 
             return $response;
