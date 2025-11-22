@@ -30,51 +30,55 @@ class Application extends App implements IBootstrap
         $this->appConfig = new AppConfig($appName);
 
         $context->registerService("RootStorage", function ($c) {
-            return $c->query("ServerContainer")->getRootFolder();
+            return $c->query("ServerContainer")->get(\OCP\Files\IRootFolder::class);
         });
 
         $context->registerService("UserSession", function ($c) {
-            return $c->query("ServerContainer")->getUserSession();
+            return $c->query("ServerContainer")->get(\OCP\IUserSession::class);
         });
 
         $context->registerService("Logger", function ($c) {
-            return $c->query("ServerContainer")->getLogger();
+            return $c->query("ServerContainer")->get(\Psr\Log\LoggerInterface::class);
         });
 
-        $context->registerService("PlayerController", function ($c) {
+        $context->registerService("OCP\IRequest", function ($c) {
+            return $c->query("ServerContainer")->get(\OCP\IRequest::class);
+        });
+
+        $context->registerService(PlayerController::class, function ($c) {
             return new PlayerController(
                 $c->query("AppName"),
-                $c->query("Request"),
+                $c->query("OCP\IRequest"),
                 $c->query("RootStorage"),
                 $c->query("UserSession"),
-                $c->query("ServerContainer")->getURLGenerator(),
+                $c->query("ServerContainer")->get(\OCP\IURLGenerator::class),
                 $c->query("Logger"),
                 $this->appConfig,
-                $c->query("ServerContainer")->getShareManager(),
-                $c->query("ServerContainer")->getSession()
+                $c->query("ServerContainer")->get(\OCP\Share\IManager::class),
+                $c->query("ServerContainer")->get(\OCP\ISession::class)
             );
         });
 
-        $context->registerService("ViewerController", function ($c) {
+        $context->registerService(ViewerController::class, function ($c) {
             $uid = $c->query("UserSession")->isLoggedIn() ? $c->query("UserSession")->getUser()->getUID() : null;
             return new ViewerController(
                 $c->query("AppName"),
-                $c->query("Request"),
+                $c->query("OCP\IRequest"),
                 $c->query("RootStorage"),
                 $c->query("UserSession"),
-                $c->query("ServerContainer")->getURLGenerator(),
+                $c->query("ServerContainer")->get(\OCP\IURLGenerator::class),
                 $c->query("Logger"),
                 $this->appConfig,
-                $c->query("ServerContainer")->getShareManager(),
-                $c->query("ServerContainer")->getSession(),
+                $c->query("ServerContainer")->get(\OCP\Share\IManager::class),
+                $c->query("ServerContainer")->get(\OCP\ISession::class),
                 $uid
             );
         });
 
-        $context->registerService("SettingsController", function ($c) {
+        $context->registerService(SettingsController::class, function ($c) {
             return new SettingsController(
                 $c->query("AppName"),
-                $c->query("Request"),
+                $c->query("OCP\IRequest"),
                 $this->appConfig
             );
         });
@@ -83,11 +87,6 @@ class Application extends App implements IBootstrap
     public function boot(IBootContext $context): void
     {
         $appName = "dashvideoplayerv2";
-
-        // Load legacy Files app scripts to restore OCA.Files.fileActions and OCA.Files.FileList
-        // Using addInitScript to ensure they load at the correct time for NC28+
-        Util::addScript('files', 'fileactions');
-        Util::addScript('files', 'filelist');
 
         // Use addInitScript for better timing with the new Files app
         Util::addScript($appName, "main");

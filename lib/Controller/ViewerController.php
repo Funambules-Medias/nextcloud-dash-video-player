@@ -18,7 +18,7 @@ use OCP\Files\Folder;
 use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
 use OCP\IL10N;
-use OCP\ILogger;
+use Psr\Log\LoggerInterface;
 use OCP\IRequest;
 use OCP\ISession;
 use OCP\IURLGenerator;
@@ -75,7 +75,7 @@ class ViewerController extends Controller
         IRootFolder $root,
         IUserSession $userSession,
         IURLGenerator $urlGenerator,
-        ILogger $logger,
+        LoggerInterface $logger,
         AppConfig $config,
         IManager $shareManager,
         ISession $session,
@@ -154,7 +154,7 @@ class ViewerController extends Controller
 
         */
 
-        $baseUri = \OC::$WEBROOT . '/index.php/s/'. $shareToken.'/download';
+        $baseUri = $this->urlGenerator->getWebroot() . '/index.php/s/'. $shareToken.'/download';
         //$baseUri = \OC::$WEBROOT . '/public.php/webdav';
         //$videoUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$baseUri$relativePath";
         $videoUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$baseUri";
@@ -190,7 +190,7 @@ class ViewerController extends Controller
 
 
         $csp = new ContentSecurityPolicy();
-        $csp->allowInlineScript(true);
+        $csp->addAllowedScriptDomain("'unsafe-inline'");
         $csp->addAllowedScriptDomain('*');
         $csp->addAllowedFrameDomain('*');
         $csp->addAllowedFrameDomain("blob:");

@@ -6,14 +6,13 @@ use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Controller;
 use OCP\Constants;
 use OCP\Files\IRootFolder;
-use OCP\ILogger;
+use Psr\Log\LoggerInterface;
 use OCP\IRequest;
 use OCP\ISession;
 use OCP\IURLGenerator;
 use OCP\IUserSession;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IManager;
-use OCP\Files\Folder;
 use OCP\Files\NotFoundException;
 
 use OCA\Dashvideoplayerv2\AppConfig;
@@ -58,7 +57,7 @@ class PlayerController extends Controller
         IRootFolder $root,
         IUserSession $userSession,
         IURLGenerator $urlGenerator,        
-        ILogger $logger,
+        LoggerInterface $logger,
         AppConfig $config,
         IManager $shareManager,
         ISession $session
@@ -165,7 +164,7 @@ class PlayerController extends Controller
             $response = new TemplateResponse($this->appName, "player", $params);
 
             $csp = new ContentSecurityPolicy();
-            $csp->allowInlineScript(true);
+            $csp->addAllowedScriptDomain("'unsafe-inline'");
             $csp->addAllowedConnectDomain('*');
             $csp->addAllowedImageDomain('*');
             $csp->addAllowedMediaDomain('*');        
@@ -217,7 +216,7 @@ class PlayerController extends Controller
             return [NULL, $error, NULL];
         }
 
-        if ($node instanceof Folder) {
+        if ($node instanceof \OCP\Files\Folder) {
             try {
                 $files = $node->getById($fileId);
             } catch (\Exception $e) {
