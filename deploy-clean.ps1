@@ -138,85 +138,85 @@ Write-Host ""
 Write-Host "# Ensuite, executez ces commandes:" -ForegroundColor Gray
 Write-Host ""
 
-$commands = @'
-# Variables
-APP_ID=dashvideoplayerv2
-APP_DIR=/var/www/nextcloud/apps/$APP_ID
-ZIP_DIR=/tmp
-ZIP_FILE=$(ls -t ${ZIP_DIR}/dashvideoplayerv2_*.zip 2>/dev/null | head -n1)
+# $commands = @'
+# # Variables
+# APP_ID=dashvideoplayerv2
+# APP_DIR=/var/www/nextcloud/apps/$APP_ID
+# ZIP_DIR=/tmp
+# ZIP_FILE=$(ls -t ${ZIP_DIR}/dashvideoplayerv2_*.zip 2>/dev/null | head -n1)
 
-# Vérifier que le ZIP existe
-if [ -z "$ZIP_FILE" ]; then
-    echo "ERREUR: Aucun ZIP dashvideoplayerv2_*.zip trouvé dans ${ZIP_DIR}"
-    exit 1
-fi
+# # Vérifier que le ZIP existe
+# if [ -z "$ZIP_FILE" ]; then
+#     echo "ERREUR: Aucun ZIP dashvideoplayerv2_*.zip trouvé dans ${ZIP_DIR}"
+#     exit 1
+# fi
 
-echo "ZIP trouvé: $ZIP_FILE"
+# echo "ZIP trouvé: $ZIP_FILE"
 
-# 1. Maintenance ON
-sudo -u www-data php /var/www/nextcloud/occ maintenance:mode --on
+# # 1. Maintenance ON
+# sudo -u www-data php /var/www/nextcloud/occ maintenance:mode --on
 
-# 2. Backup si existe (optionnel)
-if [ -d $APP_DIR ]; then
-  mkdir -p ~/backups
-  sudo tar -czf ~/backups/backup_${APP_ID}_$(date +%Y%m%d_%H%M%S).tar.gz -C /var/www/nextcloud/apps $APP_ID
-fi
+# # 2. Backup si existe (optionnel)
+# if [ -d $APP_DIR ]; then
+#   mkdir -p ~/backups
+#   sudo tar -czf ~/backups/backup_${APP_ID}_$(date +%Y%m%d_%H%M%S).tar.gz -C /var/www/nextcloud/apps $APP_ID
+# fi
 
-# 3. Nettoyer les anciennes versions
-sudo rm -rf /var/www/nextcloud/apps/video_converter*
-sudo rm -rf /var/www/nextcloud/apps/dashvideoplayer
-sudo rm -rf $APP_DIR
+# # 3. Nettoyer les anciennes versions
+# sudo rm -rf /var/www/nextcloud/apps/video_converter*
+# sudo rm -rf /var/www/nextcloud/apps/dashvideoplayer
+# sudo rm -rf $APP_DIR
 
-# 4. Extraire le nouveau ZIP
-rm -rf ~/deploy-temp
-mkdir -p ~/deploy-temp
-cd ~/deploy-temp
-unzip -q "$ZIP_FILE"
+# # 4. Extraire le nouveau ZIP
+# rm -rf ~/deploy-temp
+# mkdir -p ~/deploy-temp
+# cd ~/deploy-temp
+# unzip -q "$ZIP_FILE"
 
-# 5. Vérifier la structure
-echo "Structure extraite:"
-ls -la dashvideoplayerv2/
+# # 5. Vérifier la structure
+# echo "Structure extraite:"
+# ls -la dashvideoplayerv2/
 
-# Vérifier que le dossier a bien été extrait
-if [ ! -d "dashvideoplayerv2" ]; then
-  echo "ERREUR: Le dossier dashvideoplayerv2 n'existe pas dans le ZIP"
-  sudo -u www-data php /var/www/nextcloud/occ maintenance:mode --off
-  exit 1
-fi
+# # Vérifier que le dossier a bien été extrait
+# if [ ! -d "dashvideoplayerv2" ]; then
+#   echo "ERREUR: Le dossier dashvideoplayerv2 n'existe pas dans le ZIP"
+#   sudo -u www-data php /var/www/nextcloud/occ maintenance:mode --off
+#   exit 1
+# fi
 
-# 6. Déployer
-sudo mv -f ~/deploy-temp/dashvideoplayerv2 $APP_DIR
-sudo chown -R www-data:www-data $APP_DIR
-sudo find $APP_DIR -type d -exec chmod 755 {} \;
-sudo find $APP_DIR -type f -exec chmod 644 {} \;
+# # 6. Déployer
+# sudo mv -f ~/deploy-temp/dashvideoplayerv2 $APP_DIR
+# sudo chown -R www-data:www-data $APP_DIR
+# sudo find $APP_DIR -type d -exec chmod 755 {} \;
+# sudo find $APP_DIR -type f -exec chmod 644 {} \;
 
-# 7. Vérifier info.xml
-echo "Verification info.xml:"
-sudo cat $APP_DIR/appinfo/info.xml | grep -E '<id>|<version>'
+# # 7. Vérifier info.xml
+# echo "Verification info.xml:"
+# sudo cat $APP_DIR/appinfo/info.xml | grep -E '<id>|<version>'
 
-# 8. Activer l'app
-sudo -u www-data php /var/www/nextcloud/occ app:enable $APP_ID
+# # 8. Activer l'app
+# sudo -u www-data php /var/www/nextcloud/occ app:enable $APP_ID
 
-# 9. Reload services
-sudo systemctl reload php8.2-fpm
-sudo systemctl reload apache2
+# # 9. Reload services
+# sudo systemctl reload php8.2-fpm
+# sudo systemctl reload apache2
 
-# 10. Maintenance OFF
-sudo -u www-data php /var/www/nextcloud/occ maintenance:mode --off
+# # 10. Maintenance OFF
+# sudo -u www-data php /var/www/nextcloud/occ maintenance:mode --off
 
-# 11. Vérifier le résultat
-echo ""
-echo "Apps installees:"
-sudo -u www-data php /var/www/nextcloud/occ app:list | grep $APP_ID
+# # 11. Vérifier le résultat
+# echo ""
+# echo "Apps installees:"
+# sudo -u www-data php /var/www/nextcloud/occ app:list | grep $APP_ID
 
-# 12. Nettoyage
-rm -f "$ZIP_FILE"
-rm -rf ~/deploy-temp
+# # 12. Nettoyage
+# rm -f "$ZIP_FILE"
+# rm -rf ~/deploy-temp
 
-echo ""
-echo "Deploiement termine !"
-echo "Ouvrir: https://funambules-nc-test.koumbit.net/apps/dashvideoplayerv2/"
-'@
+# echo ""
+# echo "Deploiement termine !"
+# echo "Ouvrir: https://funambules-nc-test.koumbit.net/apps/dashvideoplayerv2/"
+# '@
 
 Write-Host $commands -ForegroundColor White
 Write-Host ""
