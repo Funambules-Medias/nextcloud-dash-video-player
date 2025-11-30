@@ -81,28 +81,47 @@ header, #header, .header, #appmenu, .app-menu {
     justify-content: center !important;
 }
 
+/* Add darker scrim behind controls for better visibility of white icons */
+.shaka-controls-container[shown=true] .shaka-scrim-container {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 30%, transparent 60%) !important;
+}
+
+/* Force consistent control bar height */
+.shaka-bottom-controls {
+    padding-bottom: 10px !important; /* Fixed pixel padding instead of percentage */
+}
+
 /* Fix settings menu positioning and colors */
-.shaka-settings-menu {
-    bottom: 65px !important; /* Increased to ensure it does not cover the buttons */
+.shaka-settings-menu,
+.shaka-overflow-menu {
+    /* Use fixed pixel positioning - menus appear above buttons consistently */
+    bottom: 75px !important; /* Fixed distance from bottom of container */
+    top: auto !important; /* Override any top positioning */
     right: 15px !important;  /* Align to the right edge */
+    left: auto !important; /* Override any left positioning */
     position: absolute !important;
     z-index: 1000 !important;
     background: rgba(28, 28, 28, 0.95) !important; /* Dark gray background */
     border-radius: 4px !important;
     color: white !important; /* Force white text */
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    max-height: calc(100vh - 120px) !important; /* Prevent overflow */
+    transform: none !important; /* Disable any transform positioning */
 }
 
-.shaka-settings-menu button {
+.shaka-settings-menu button,
+.shaka-overflow-menu button {
     color: white !important;
     background: transparent !important;
 }
 
-.shaka-settings-menu button:hover {
+.shaka-settings-menu button:hover,
+.shaka-overflow-menu button:hover {
     background: rgba(255, 255, 255, 0.1) !important;
 }
 
-.shaka-settings-menu i.material-icons-round {
+.shaka-settings-menu i.material-icons-round,
+.shaka-overflow-menu i.material-icons-round {
     color: white !important;
 }
 
