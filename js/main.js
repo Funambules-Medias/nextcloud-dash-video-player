@@ -1,5 +1,4 @@
 (function (OCA) {
-  console.log("DASHVIDEOPLAYERV2: main.js loaded! URL:", window.location.href);
   OCA.Dashvideoplayerv2 = _.extend({}, OCA.Dashvideoplayerv2);
 
   OCA.AppSettings = null;
@@ -30,8 +29,6 @@
             shareToken = match[1];
         }
     }
-
-    console.log("DASHVIDEOPLAYERV2: OpenPlayer shareToken detection:", shareToken);
 
     if (shareToken) {
         url += '?shareToken=' + encodeURIComponent(shareToken);
@@ -152,7 +149,6 @@
     if (OCA.Dashvideoplayerv2.Mimes) {
       callbackSettings();
     } else if (isPublic || shareToken) {
-        console.log("DASHVIDEOPLAYERV2: Public share detected. Skipping settings fetch and using defaults.");
         OCA.Dashvideoplayerv2.Mimes = {
             "mpd": {"mime": "application/mpd", "type": "video"},
             "m3u8": {"mime": "application/m3u8", "type": "video"}
@@ -173,7 +169,6 @@
       })
         .then(function (response) {
           if (response.status !== 200) {
-            console.log("DASHVIDEOPLAYERV2: Fetch settings error. Status Code: " + response.status + ". Using defaults.");
             // Fallback for public shares or errors
             OCA.Dashvideoplayerv2.Mimes = {
                 "mpd": {"mime": "application/mpd", "type": "video"},
@@ -190,7 +185,6 @@
           });
         })
         .catch(function (err) {
-          console.log("DASHVIDEOPLAYERV2: Fetch settings error: ", err, ". Using defaults.");
             // Fallback for network errors
             OCA.Dashvideoplayerv2.Mimes = {
                 "mpd": {"mime": "application/mpd", "type": "video"},
@@ -203,18 +197,15 @@
 
   OCA.Dashvideoplayerv2.FileList = {
     attach: function (fileList) {
-      console.log("DASHVIDEOPLAYERV2: FileList.attach called for", fileList.id);
       if (fileList.id == "trashbin") {
         return;
       }
 
       var registerfunc = function () {
-        console.log("DASHVIDEOPLAYERV2: registerfunc called. Mimes:", OCA.Dashvideoplayerv2.Mimes);
         if (typeof OCA.Dashvideoplayerv2.Mimes != "object") return;
 
         for (const ext in OCA.Dashvideoplayerv2.Mimes) {
           attr = OCA.Dashvideoplayerv2.Mimes[ext];
-          console.log("DASHVIDEOPLAYERV2: Registering action for " + attr.mime);
           fileList.fileActions.registerAction({
             name: "mpdOpen",
             displayName: t(OCA.Dashvideoplayerv2.AppName, "Play video 1"),
@@ -239,7 +230,6 @@
             attr.mime == "application/mpd" ||
             attr.mime == "application/m3u8"
           ) {
-            console.log("DASHVIDEOPLAYERV2: Setting default action for " + attr.mime);
             fileList.fileActions.setDefault(attr.mime, "mpdOpen");
           }
         }
@@ -261,7 +251,6 @@
   };
 
   var initPage = function () {
-    console.log("init.ispubic: ", $("#isPublic").val());
     if ($("#isPublic").val() === "1" && !$("#filestable").length) {
       var fileName = $("#filename").val();
       var mimeType = $("#mimetype").val();
@@ -288,22 +277,12 @@
 
       OCA.Dashvideoplayerv2.GetSettings(initSharedButton);
     } else {
-      console.log("DASHVIDEOPLAYERV2: Registering plugin...");
-      
       var registerFileActions = function () {
-        console.log("DASHVIDEOPLAYERV2: registerFileActions called");
-
         // 1. Global Capture Event Listener (The "Hammer" approach)
         if (!window.dashPlayerListenerAttached) {
-            console.log("DASHVIDEOPLAYERV2: Attaching global capture click listener");
             document.addEventListener('click', function(e) {
                 var target = e.target;
                 
-                // DEBUG: Log click details if inside file list to help debug structure
-                if (target.closest && (target.closest('#fileList') || target.closest('.files-file-list') || target.closest('tbody') || target.closest('.grid-view'))) {
-                    console.log('DASHVIDEOPLAYERV2: Click inside file list on:', target.tagName, target.className, target);
-                }
-
                 var row = null;
                 var current = target;
                 
@@ -330,8 +309,10 @@
                     
                     if (fileName) {
                         fileName = fileName.replace(/[\n\r]+/g, '').trim(); // Clean up whitespace
-                    } else {
-                        console.log('DASHVIDEOPLAYERV2: Could not determine filename for row', row);
+                    }
+                    
+                    if (!fileName) {
+                        return; // Not a valid file row
                     }
 
                     // 2. Get File ID (The hard part)
@@ -375,18 +356,14 @@
                     }
 
                     if (fileName && (fileName.toLowerCase().endsWith('.mpd') || fileName.toLowerCase().endsWith('.m3u8'))) {
-                        console.log("DASHVIDEOPLAYERV2: Intercepted click on '" + fileName + "'");
                         e.preventDefault();
                         e.stopPropagation();
                         e.stopImmediatePropagation();
 
                         if (fileId) {
-                            console.log("DASHVIDEOPLAYERV2: Found File ID in DOM:", fileId);
                             OCA.Dashvideoplayerv2.OpenPlayer(fileId, null);
                         } else {
-                            console.log("DASHVIDEOPLAYERV2: ID not found in DOM, attempting WebDAV lookup...");
-                            
-                            // 1. Determine current directory
+                            // WebDAV lookup for file ID
                             var dir = '/';
                             var urlParams = new URLSearchParams(window.location.search);
                             if (urlParams.has('dir')) {
@@ -400,9 +377,6 @@
                             var path = dir + '/' + fileName;
                             path = path.replace('//', '/'); // Normalize
                             
-                            console.log("DASHVIDEOPLAYERV2: Looking up path:", path);
-                            
-                            // 3. WebDAV PROPFIND
                             var user = OC.getCurrentUser().uid;
                             
                             // Construct WebDAV URL
@@ -414,8 +388,6 @@
                             for (var i = 0; i < pathParts.length; i++) {
                                 if (pathParts[i]) davUrl += '/' + encodeURIComponent(pathParts[i]);
                             }
-
-                            console.log("DASHVIDEOPLAYERV2: WebDAV URL:", davUrl);
                             
                             var headers = {
                                 'Depth': '0',
@@ -475,11 +447,9 @@
                                 }
 
                                 if (fileId) {
-                                    console.log("DASHVIDEOPLAYERV2: WebDAV found ID:", fileId);
                                     OCA.Dashvideoplayerv2.OpenPlayer(fileId, null);
                                 } else {
-                                     console.error("DASHVIDEOPLAYERV2: WebDAV response did not contain oc:id");
-                                     console.log("DASHVIDEOPLAYERV2: XML Response:", xmlText);
+                                     console.error("DASHVIDEOPLAYERV2: Could not determine file ID from WebDAV response");
                                 }
                             }).catch(function(err) {
                                 console.error("DASHVIDEOPLAYERV2: WebDAV lookup error", err);
@@ -494,16 +464,13 @@
 
         // 2. Try New API (Nextcloud 28+)
         if (window.Nextcloud && window.Nextcloud.Files && window.Nextcloud.Files.registerFileAction) {
-            console.log("DASHVIDEOPLAYERV2: Registering file action via window.Nextcloud.Files");
-            
             var openDashPlayer = function(nodes) {
                 var node = nodes[0];
                 var fileId = node.fileId || node.id;
                 var fileName = node.name || node.basename;
                 var dir = node.path ? node.path.substring(0, node.path.lastIndexOf('/')) : '/';
                 
-                console.log("DASHVIDEOPLAYERV2: Opening player (New API) for", fileId, fileName, dir);
-                OCA.Dashvideoplayerv2.OpenPlayer(fileId, null);
+                OCA.Dashvideoplayerv2.OpenPlayer(fileId, OC.joinPaths(dir, fileName));
             };
 
             // Register for each mime type
@@ -530,7 +497,6 @@
             // Iterate over your mimes
             for (const ext in OCA.Dashvideoplayerv2.Mimes) {
                 var attr = OCA.Dashvideoplayerv2.Mimes[ext];
-                console.log("DASHVIDEOPLAYERV2: Registering action for " + attr.mime);
                 
                 OCA.Files.fileActions.registerAction({
                     name: 'mpdOpen',
@@ -551,8 +517,6 @@
                         if (!fileId && context.$file) {
                             fileId = context.$file.attr('data-id');
                         }
-
-                        console.log("DASHVIDEOPLAYERV2: Opening player for", fileId, fileName, dir);
 
                         if (fileId && dir) {
                             OCA.Dashvideoplayerv2.OpenPlayer(

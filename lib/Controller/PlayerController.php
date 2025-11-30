@@ -91,12 +91,6 @@ class PlayerController extends Controller
     public function index($fileId, $shareToken = NULL, $filePath = NULL)
     {
         try {
-            $this->logger->info("PlayerController::index called. fileId: $fileId, shareToken: " . ($shareToken ?? 'NULL'), ["app" => $this->appName]);
-            
-            if ($shareToken === NULL) {
-                 $this->logger->warning("PlayerController::index called WITHOUT shareToken!", ["app" => $this->appName]);
-            }
-
             $baseUri = '';
             $relativePath = '';
 
@@ -172,10 +166,6 @@ class PlayerController extends Controller
             }
             
             $videoUrl = "$protocol://$host$baseUri$encodedRelativePath";
-
-            $this->logger->error("PlayerController Debug: relativePath=" . $relativePath, ["app" => $this->appName]);
-            $this->logger->error("PlayerController Debug: encodedRelativePath=" . $encodedRelativePath, ["app" => $this->appName]);
-            $this->logger->error("PlayerController Debug: videoUrl=" . $videoUrl, ["app" => $this->appName]);
 
             $coverUrl = "";
             if (strpos($videoUrl, '.mpd') !== false)

@@ -1,6 +1,4 @@
 (function() {
-    console.log('DASHVIDEOPLAYERV2: player.js loaded');
-
     async function init() {
         if (window.dashVideoPlayerInitialized) {
             console.log('DASHVIDEOPLAYERV2: Already initialized, skipping');
@@ -18,8 +16,6 @@
         const subtitlesUrl = video.getAttribute('data-subtitles-url');
         const shareToken = video.getAttribute('data-share-token');
         const posterUrl = video.getAttribute('data-poster-url');
-
-        console.log('DASHVIDEOPLAYERV2: Initializing player with manifest:', manifestUri);
 
         // Handle poster loading with auth if needed
         /*
@@ -67,9 +63,7 @@
 
         // Add auth filter if token exists (for public shares)
         if (shareToken) {
-            console.log('DASHVIDEOPLAYERV2: Adding public share auth token for WebDAV');
             player.getNetworkingEngine().registerRequestFilter(function(type, request) {
-                console.log('DASHVIDEOPLAYERV2: Intercepting request type:', type, 'URL:', request.uris[0]);
                 request.headers['Authorization'] = 'Basic ' + btoa(shareToken + ':');
             });
         }
@@ -86,7 +80,6 @@
         // This is an asynchronous process.
         try {
             await player.load(manifestUri);
-            console.log('DASHVIDEOPLAYERV2: Manifest loaded successfully');
             
             if (subtitlesUrl) {
                 player.addTextTrackAsync(subtitlesUrl, 'fr-CA', 'subtitles');
@@ -111,10 +104,6 @@
                     switchInterval: 1
                 }
             });
-            console.log('DASHVIDEOPLAYERV2: Player configuration:', player.getConfiguration())
-
-            // This runs if the asynchronous load is successful.
-            console.log('DASHVIDEOPLAYERV2: The video has now been loaded!');
         } catch (error) {
             onPlayerError(error);
         }
@@ -154,10 +143,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         const video = document.getElementById('video');
         if (video && video['ui']) {
-            console.log('DASHVIDEOPLAYERV2: UI already loaded, initializing immediately');
             init();
-        } else {
-            console.log('DASHVIDEOPLAYERV2: Waiting for shaka-ui-loaded event');
         }
     });
 
