@@ -81,18 +81,50 @@ header, #header, .header, #appmenu, .app-menu {
     justify-content: center !important;
 }
 
-/* Fix settings menu positioning */
+/* Fix settings menu positioning and colors */
 .shaka-settings-menu {
-    bottom: 45px !important; /* Position above the control bar */
-    right: 10px !important;  /* Align to the right edge */
+    bottom: 65px !important; /* Increased to ensure it does not cover the buttons */
+    right: 15px !important;  /* Align to the right edge */
     position: absolute !important;
     z-index: 1000 !important;
-    background: rgba(0, 0, 0, 0.9) !important; /* Ensure readability */
+    background: rgba(28, 28, 28, 0.95) !important; /* Dark gray background */
     border-radius: 4px !important;
+    color: white !important; /* Force white text */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.shaka-settings-menu button {
+    color: white !important;
+    background: transparent !important;
+}
+
+.shaka-settings-menu button:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.shaka-settings-menu i.material-icons-round {
+    color: white !important;
 }
 
 /* Ensure specific menus are also handled if they have specific classes */
 .shaka-resolutions, .shaka-text-languages {
     max-height: 60vh !important; /* Prevent menu from being too tall */
     overflow-y: auto !important;
+}
+
+/* Move subtitles up to resemble YouTube style */
+.shaka-text-container {
+    bottom: 12% !important; /* Move up from the very bottom */
+}
+
+/* Style the text itself to look more like YouTube */
+.shaka-text-container span {
+    background-color: transparent !important; /* No background */
+    /* Thicker and smoother outline using multiple shadows */
+    text-shadow: 
+        3px 0 0 #000, -3px 0 0 #000, 0 3px 0 #000, 0 -3px 0 #000,
+        2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000,
+        1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000 !important;
+    font-family: Roboto, Arial, sans-serif !important;
+    font-weight: bold !important; /* Bold text helps with the outline look */
 }

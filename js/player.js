@@ -1,23 +1,20 @@
 (function() {
-    console.log('DASHVIDEOPLAYERV2: player.js loaded');
-
     async function init() {
         if (window.dashVideoPlayerInitialized) {
-            console.log('DASHVIDEOPLAYERV2: Already initialized, skipping');
             return;
         }
         window.dashVideoPlayerInitialized = true;
 
         const video = document.getElementById('video');
         if (!video) {
-            console.error('DASHVIDEOPLAYERV2: Video element not found');
+            console.error('DashVideoPlayer: Video element not found');
             return;
         }
 
-        const manifestUri = video.getAttribute('data-manifest-url');
+        const manifestUri = video.getAttribute('data-stream-url');
         const subtitlesUrl = video.getAttribute('data-subtitles-url');
-
-        console.log('DASHVIDEOPLAYERV2: Initializing player with manifest:', manifestUri);
+        const shareToken = video.getAttribute('data-share-token');
+        const posterUrl = video.getAttribute('data-poster-url');
 
         // When using the UI, the player is made automatically by the UI object.
         const ui = video['ui'];
@@ -28,9 +25,9 @@
                 'time_and_duration',
                 'mute',
                 'volume',
-                'fullscreen',
                 'captions',
-                'quality'
+                'quality',
+                'fullscreen'
             ],
         };
         ui.configure(config);
@@ -38,7 +35,14 @@
         const controls = ui.getControls();
         const player = controls.getPlayer();
 
-        // Attach player and ui to the window to make it easy to access in the JS console.
+        // Add auth filter for public shares (WebDAV authentication)
+        if (shareToken) {
+            player.getNetworkingEngine().registerRequestFilter(function(type, request) {
+                request.headers['Authorization'] = 'Basic ' + btoa(shareToken + ':');
+            });
+        }
+
+        // Attach player and ui to the window for debugging
         window.player = player;
         window.ui = ui;
 
@@ -50,7 +54,6 @@
         // This is an asynchronous process.
         try {
             await player.load(manifestUri);
-            console.log('DASHVIDEOPLAYERV2: Manifest loaded successfully');
             
             if (subtitlesUrl) {
                 player.addTextTrackAsync(subtitlesUrl, 'fr-CA', 'subtitles');
@@ -75,10 +78,6 @@
                     switchInterval: 1
                 }
             });
-            console.log('DASHVIDEOPLAYERV2: Player configuration:', player.getConfiguration())
-
-            // This runs if the asynchronous load is successful.
-            console.log('DASHVIDEOPLAYERV2: The video has now been loaded!');
         } catch (error) {
             onPlayerError(error);
         }
@@ -90,38 +89,26 @@
     }
 
     function onPlayerError(error) {
-        // Handle player error
-        console.error('DASHVIDEOPLAYERV2: Error code', error.code, 'object', error);
-        if (error.data) {
-            console.error('DASHVIDEOPLAYERV2: Error data', error.data);
-        }
+        console.error('DashVideoPlayer: Error code', error.code, 'object', error);
     }
 
     function onUIErrorEvent(errorEvent) {
-        // Extract the shaka.util.Error object from the event.
         onPlayerError(errorEvent.detail);
     }
 
     function initFailed(errorEvent) {
-        // Handle the failure to load; errorEvent.detail.reasonCode has a
-        // shaka.ui.FailReasonCode describing why.
-        console.error('DASHVIDEOPLAYERV2: Unable to load the UI library!');
+        console.error('DashVideoPlayer: Unable to load the UI library');
     }
 
-    // Listen to the custom shaka-ui-loaded event, to wait until the UI is loaded.
+    // Listen to the custom shaka-ui-loaded event
     document.addEventListener('shaka-ui-loaded', init);
-    // Listen to the custom shaka-ui-load-failed event, in case Shaka Player fails
-    // to load (e.g. due to lack of browser support).
     document.addEventListener('shaka-ui-load-failed', initFailed);
 
     // Check if UI is already loaded (in case script runs after event)
     document.addEventListener('DOMContentLoaded', () => {
         const video = document.getElementById('video');
         if (video && video['ui']) {
-            console.log('DASHVIDEOPLAYERV2: UI already loaded, initializing immediately');
             init();
-        } else {
-            console.log('DASHVIDEOPLAYERV2: Waiting for shaka-ui-loaded event');
         }
     });
 

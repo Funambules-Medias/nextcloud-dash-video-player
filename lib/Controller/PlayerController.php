@@ -3,6 +3,7 @@ namespace OCA\Dashvideoplayerv2\Controller;
 
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
+use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Controller;
 use OCP\Constants;
 use OCP\Files\IRootFolder;
@@ -85,20 +86,37 @@ class PlayerController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     * @PublicPage
      */
     public function index($fileId, $shareToken = NULL, $filePath = NULL)
     {
         try {
-            $this->logger->info("PlayerController::index called with fileId: $fileId", ["app" => $this->appName]);
+            $this->logger->info("PlayerController::index called. fileId: $fileId, shareToken: " . ($shareToken ?? 'NULL'), ["app" => $this->appName]);
+            
+            if ($shareToken === NULL) {
+                 $this->logger->warning("PlayerController::index called WITHOUT shareToken!", ["app" => $this->appName]);
+            }
 
-            /*if (empty($shareToken) && !$this->userSession->isLoggedIn()) {
-                $redirectUrl = $this->urlGenerator->linkToRoute("core.login.showLoginForm", [
-                    "redirect_url" => $this->request->getRequestUri()
-                ]);
-                return new RedirectResponse($redirectUrl);
-            }*/
+            $baseUri = '';
+            $relativePath = '';
 
-            if ($fileId) {
+            if ($shareToken) {
+                list($file, $error) = $this->getFileByToken($fileId, $shareToken);
+                if (isset($error)) {
+                    return new TemplateResponse($this->appName, "error", ["message" => $error]);
+                }
+                
+                // Calculate relative path for public share
+                list($node, $err, $share) = $this->getNodeByToken($shareToken);
+                if ($node instanceof \OCP\Files\Folder) {
+                    $relativePath = $node->getRelativePath($file->getPath());
+                } else {
+                    $relativePath = $file->getName();
+                }
+                
+                // Use public WebDAV endpoint for streaming
+                $baseUri = $this->urlGenerator->getWebroot() . '/public.php/webdav';
+            } elseif ($fileId) {
                 list($file, $error) = $this->getFile($fileId);
                 if (isset($error)) {
                     $this->logger->error("Load: " . $fileId . " " . $error, array("app" => $this->appName));
@@ -125,20 +143,21 @@ class PlayerController extends Controller
                         $relativePath = '/' . $file->getName(); // Desperate fallback
                     }
                 }
+                $baseUri = $this->urlGenerator->getWebroot() . '/remote.php/webdav';
             } else {
+                // Fallback for legacy calls?
                 list($file, $error) = $this->getFileByToken($fileId, $shareToken);
                 if (isset($error)) {
                      return new TemplateResponse($this->appName, "error", ["message" => $error]);
                 }
                 $relativePath = $file->getPath();
+                $baseUri = $this->urlGenerator->getWebroot() . '/remote.php/webdav';
             }
 
             /* 
             Generate video's web url for the player to use as 'src' attr
-            URL looks like this: http://localhost:8888/nextcloud/remote.php/webdav/directory/somevideofile.mpd
             */
 
-            $baseUri = $this->urlGenerator->getWebroot() . '/remote.php/webdav';
             // Use IRequest to get protocol and host safely, handling proxies if configured in Nextcloud
             $protocol = $this->request->getServerProtocol();
             $host = $this->request->getServerHost();
@@ -147,11 +166,12 @@ class PlayerController extends Controller
             // We use rawurlencode to encode spaces as %20 (not +), and then restore the slashes
             $encodedRelativePath = str_replace('%2F', '/', rawurlencode($relativePath));
             
+            // Ensure leading slash
+            if (strpos($encodedRelativePath, '/') !== 0) {
+                $encodedRelativePath = '/' . $encodedRelativePath;
+            }
+            
             $videoUrl = "$protocol://$host$baseUri$encodedRelativePath";
-
-            $this->logger->error("PlayerController Debug: relativePath=" . $relativePath, ["app" => $this->appName]);
-            $this->logger->error("PlayerController Debug: encodedRelativePath=" . $encodedRelativePath, ["app" => $this->appName]);
-            $this->logger->error("PlayerController Debug: videoUrl=" . $videoUrl, ["app" => $this->appName]);
 
             $coverUrl = "";
             if (strpos($videoUrl, '.mpd') !== false)
@@ -170,9 +190,14 @@ class PlayerController extends Controller
                 "videoUrl" => $videoUrl,
                 "coverUrl" => $coverUrl,
                 "subtitlesUrl" => $subtitlesUrl,
+                "shareToken" => $shareToken
             ];
-        
 
+            // For public shares, use standalone HTML to avoid Nextcloud's auth redirect
+            if ($shareToken) {
+                return $this->createStandalonePlayerResponse($params);
+            }
+        
             $response = new TemplateResponse($this->appName, "player", $params);
 
             $csp = new ContentSecurityPolicy();
@@ -321,6 +346,88 @@ class PlayerController extends Controller
         }
 
         return [$share, NULL];
+    }
+
+    /**
+     * Create a standalone HTML response for public share player
+     * This bypasses Nextcloud's template system to avoid auth redirects
+     */
+    private function createStandalonePlayerResponse($params) {
+        $videoUrl = $params['videoUrl'];
+        $coverUrl = $params['coverUrl'];
+        $subtitlesUrl = $params['subtitlesUrl'];
+        $shareToken = $params['shareToken'];
+        
+        // Get the app's web path for loading assets
+        $appWebPath = $this->urlGenerator->linkTo($this->appName, '');
+        
+        $html = <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Player</title>
+    <link rel="stylesheet" href="{$appWebPath}css/controls.css">
+    <link rel="stylesheet" href="{$appWebPath}css/player.css">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            overflow: hidden;
+        }
+        #app-content {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="app-content">
+        <div data-shaka-player-container style="position: absolute; top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; background-color: black;">
+            <video data-shaka-player autoplay 
+                style="position: absolute; top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; background-color: black;" 
+                id="video" 
+                data-poster-url="{$coverUrl}"
+                data-stream-url="{$videoUrl}"
+                data-subtitles-url="{$subtitlesUrl}"
+                data-share-token="{$shareToken}"
+            ></video>
+        </div>
+    </div>
+    <script src="{$appWebPath}js/mux.js"></script>
+    <script src="{$appWebPath}js/shaka-player.ui.js"></script>
+    <script src="{$appWebPath}js/player.js"></script>
+</body>
+</html>
+HTML;
+
+        $response = new Response();
+        $response->setStatus(200);
+        $response->addHeader('Content-Type', 'text/html; charset=utf-8');
+        
+        // Set CSP headers manually
+        $cspValue = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'self' 'unsafe-inline'; img-src * blob: data:; media-src * blob: data:; connect-src * blob: data:; font-src * blob: data:;";
+        $response->addHeader('Content-Security-Policy', $cspValue);
+        
+        // Custom response class to output HTML
+        return new class($html) extends Response {
+            private $html;
+            public function __construct($html) {
+                parent::__construct();
+                $this->html = $html;
+                $this->setStatus(200);
+                $this->addHeader('Content-Type', 'text/html; charset=utf-8');
+                $cspValue = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'self' 'unsafe-inline'; img-src * blob: data:; media-src * blob: data:; connect-src * blob: data:; font-src * blob: data:;";
+                $this->addHeader('Content-Security-Policy', $cspValue);
+            }
+            public function render(): string {
+                return $this->html;
+            }
+        };
     }
        
 }
