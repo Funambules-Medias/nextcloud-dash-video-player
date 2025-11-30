@@ -13,7 +13,7 @@ script("dashvideoplayerv2", "player");
             id="video" 
             data-poster-url="<?php p($coverUrl) ?>"
             data-stream-url="<?php p($videoUrl) ?>"
-            data-subtitles-url="<?php p($subtitlesUrl) ?>"
+            data-subtitles-list='<?php echo json_encode($_["subtitlesList"]); ?>'
             data-share-token="<?php p($_['shareToken']) ?>"
         ></video>
     </div>

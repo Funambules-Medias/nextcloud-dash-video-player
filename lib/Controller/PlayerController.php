@@ -102,6 +102,7 @@ class PlayerController extends Controller
                 
                 // Calculate relative path for public share
                 list($node, $err, $share) = $this->getNodeByToken($shareToken);
+                $shareRoot = $node; // Save the share root for subtitle discovery
                 if ($node instanceof \OCP\Files\Folder) {
                     $relativePath = $node->getRelativePath($file->getPath());
                 } else {
@@ -119,6 +120,7 @@ class PlayerController extends Controller
                 
                 $uid = $this->userSession->getUser()->getUID();
                 $baseFolder = $this->root->getUserFolder($uid);
+                $shareRoot = null; // No share root for logged-in users
                 
                 // Robust path calculation
                 $filePath = $file->getPath();
@@ -173,17 +175,14 @@ class PlayerController extends Controller
             if (strpos($videoUrl, '.m3u8') !== false)
                 $coverUrl = str_replace(".m3u8",".jpg",$videoUrl);
 
-            $subtitlesUrl = "";
-            if (strpos($videoUrl, '.mpd') !== false)
-                $subtitlesUrl = str_replace(".mpd", ".vtt", $videoUrl);
-            if (strpos($videoUrl, '.m3u8') !== false)
-                $subtitlesUrl = str_replace(".m3u8",".vtt",$videoUrl);
+            // Discover all subtitle files in the same directory
+            $subtitlesList = $this->discoverSubtitles($file, $baseUri, $protocol, $host, $shareRoot ?? null);
 
             $params = [
                 "fileId" => $fileId,  
                 "videoUrl" => $videoUrl,
                 "coverUrl" => $coverUrl,
-                "subtitlesUrl" => $subtitlesUrl,
+                "subtitlesList" => $subtitlesList,
                 "shareToken" => $shareToken
             ];
 
@@ -324,13 +323,142 @@ class PlayerController extends Controller
     }
 
     /**
+     * Discover all subtitle files (.vtt) in the same directory as the video
+     * Looks for patterns like: videoname.vtt, videoname_en.vtt, videoname_fr.vtt, etc.
+     * 
+     * @param $videoFile The video file node
+     * @param $baseUri The base WebDAV URI
+     * @param $protocol The protocol (http/https)
+     * @param $host The server host
+     * @param $shareRoot The share root node for public shares (null for logged-in users)
+     */
+    private function discoverSubtitles($videoFile, $baseUri, $protocol, $host, $shareRoot = null) {
+        $subtitles = [];
+        
+        try {
+            $parent = $videoFile->getParent();
+            $videoName = $videoFile->getName();
+            
+            // Get base name without extension
+            $baseName = preg_replace('/\.(mpd|m3u8)$/i', '', $videoName);
+            
+            // List all files in the directory
+            $files = $parent->getDirectoryListing();
+            
+            // Language code to full name mapping
+            $languageNames = [
+                'en' => 'English',
+                'fr' => 'Français',
+                'es' => 'Español',
+                'de' => 'Deutsch',
+                'it' => 'Italiano',
+                'pt' => 'Português',
+                'ru' => 'Русский',
+                'ja' => '日本語',
+                'ko' => '한국어',
+                'zh' => '中文',
+                'ar' => 'العربية',
+                'hi' => 'हिन्दी',
+                'nl' => 'Nederlands',
+                'pl' => 'Polski',
+                'sv' => 'Svenska',
+                'da' => 'Dansk',
+                'fi' => 'Suomi',
+                'no' => 'Norsk',
+                'cs' => 'Čeština',
+                'hu' => 'Magyar',
+                'tr' => 'Türkçe',
+                'el' => 'Ελληνικά',
+                'he' => 'עברית',
+                'th' => 'ไทย',
+                'vi' => 'Tiếng Việt',
+                'id' => 'Bahasa Indonesia',
+                'ms' => 'Bahasa Melayu',
+                'uk' => 'Українська',
+                'ro' => 'Română',
+                'bg' => 'Български',
+                'hr' => 'Hrvatski',
+                'sk' => 'Slovenčina',
+                'sl' => 'Slovenščina',
+                'et' => 'Eesti',
+                'lv' => 'Latviešu',
+                'lt' => 'Lietuvių',
+            ];
+            
+            foreach ($files as $file) {
+                if ($file->getType() !== 'file') continue;
+                
+                $fileName = $file->getName();
+                
+                // Check if it's a VTT file matching our video
+                if (preg_match('/^' . preg_quote($baseName, '/') . '(?:_([a-z]{2}(?:-[A-Z]{2})?))?\.vtt$/i', $fileName, $matches)) {
+                    $langCode = isset($matches[1]) ? strtolower($matches[1]) : 'und'; // 'und' for undefined
+                    $shortCode = explode('-', $langCode)[0]; // Get just 'fr' from 'fr-ca'
+                    
+                    // Get language name
+                    $langName = $languageNames[$shortCode] ?? ucfirst($langCode);
+                    if (strpos($langCode, '-') !== false) {
+                        // Has region code like fr-CA
+                        $parts = explode('-', $langCode);
+                        $langName = ($languageNames[$parts[0]] ?? ucfirst($parts[0])) . ' (' . strtoupper($parts[1]) . ')';
+                    }
+                    
+                    // Build URL for this subtitle file
+                    $subtitlePath = $parent->getPath() . '/' . $fileName;
+                    
+                    // Get relative path from user folder or share root
+                    if ($shareRoot !== null) {
+                        // For public shares, calculate path relative to share root
+                        if ($shareRoot instanceof \OCP\Files\Folder) {
+                            $relativePath = $shareRoot->getRelativePath($file->getPath());
+                        } else {
+                            // Share is a single file's parent folder case
+                            $relativePath = '/' . $fileName;
+                        }
+                    } elseif ($this->userSession->isLoggedIn()) {
+                        $uid = $this->userSession->getUser()->getUID();
+                        $userFolder = $this->root->getUserFolder($uid);
+                        $relativePath = $userFolder->getRelativePath($subtitlePath);
+                    } else {
+                        // Fallback
+                        $relativePath = '/' . $fileName;
+                    }
+                    
+                    $encodedPath = str_replace('%2F', '/', rawurlencode($relativePath));
+                    if (strpos($encodedPath, '/') !== 0) {
+                        $encodedPath = '/' . $encodedPath;
+                    }
+                    
+                    $subtitleUrl = "$protocol://$host$baseUri$encodedPath";
+                    
+                    $subtitles[] = [
+                        'url' => $subtitleUrl,
+                        'lang' => $langCode,
+                        'label' => $langName
+                    ];
+                }
+            }
+            
+            // Sort by language code
+            usort($subtitles, function($a, $b) {
+                return strcmp($a['lang'], $b['lang']);
+            });
+            
+        } catch (\Exception $e) {
+            $this->logger->warning('Failed to discover subtitles: ' . $e->getMessage(), ['app' => $this->appName]);
+        }
+        
+        return $subtitles;
+    }
+
+    /**
      * Create a standalone HTML response for public share player
      * This bypasses Nextcloud's template system to avoid auth redirects
      */
     private function createStandalonePlayerResponse($params) {
         $videoUrl = $params['videoUrl'];
         $coverUrl = $params['coverUrl'];
-        $subtitlesUrl = $params['subtitlesUrl'];
+        $subtitlesList = json_encode($params['subtitlesList']);
         $shareToken = $params['shareToken'];
         
         // Get the app's web path for loading assets
@@ -368,7 +496,7 @@ class PlayerController extends Controller
                 id="video" 
                 data-poster-url="{$coverUrl}"
                 data-stream-url="{$videoUrl}"
-                data-subtitles-url="{$subtitlesUrl}"
+                data-subtitles-list='{$subtitlesList}'
                 data-share-token="{$shareToken}"
             ></video>
         </div>

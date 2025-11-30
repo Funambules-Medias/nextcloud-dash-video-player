@@ -13,9 +13,19 @@
         }
 
         const manifestUri = video.getAttribute('data-stream-url');
-        const subtitlesUrl = video.getAttribute('data-subtitles-url');
+        const subtitlesListJson = video.getAttribute('data-subtitles-list');
         const shareToken = video.getAttribute('data-share-token');
         const posterUrl = video.getAttribute('data-poster-url');
+        
+        // Parse subtitles list
+        let subtitlesList = [];
+        try {
+            if (subtitlesListJson) {
+                subtitlesList = JSON.parse(subtitlesListJson);
+            }
+        } catch (e) {
+            console.warn('DASHVIDEOPLAYERV2: Failed to parse subtitles list', e);
+        }
 
         // Handle poster loading with auth if needed
         /*
@@ -81,8 +91,11 @@
         try {
             await player.load(manifestUri);
             
-            if (subtitlesUrl) {
-                player.addTextTrackAsync(subtitlesUrl, 'fr-CA', 'subtitles');
+            // Add all discovered subtitle tracks
+            if (subtitlesList && subtitlesList.length > 0) {
+                for (const sub of subtitlesList) {
+                    await player.addTextTrackAsync(sub.url, sub.lang, 'subtitle', '', '', sub.label);
+                }
                 player.setTextTrackVisibility(true);
             }
             
