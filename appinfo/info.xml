@@ -5,7 +5,7 @@
     <name>Dash Video Player v2</name>
     <summary>MPEG-DASH video player</summary>
     <description>Reproduces mpeg-dash (mpd) video files</description>
-    <version>1.0.0</version>
+    <version>0.0.1</version>
     <licence>agpl</licence>
     <author>Daniel Figueroa J</author>
     <namespace>Dashvideoplayerv2</namespace>

@@ -184,6 +184,7 @@ class ViewerController extends Controller
         if ($this->userId) {
             $response = new TemplateResponse($this->appName, "viewer", $params);
         } else {
+            $this->logger->error("DASH PublicTemplateResponse", array("app" => $this->appName));
             $response = new PublicTemplateResponse($this->appName, "viewer", $params);
         }
 
@@ -310,6 +311,7 @@ class ViewerController extends Controller
      */
     private function getFileByToken($fileId, $shareToken)
     {
+        $this->logger->error("@@ DASH getFileByToken. fi: $fileId / st: $shareToken ", array("app" => $this->appName));
         list($node, $error, $share) = $this->getNodeByToken($shareToken);
 
         if (isset($error)) {
@@ -320,7 +322,7 @@ class ViewerController extends Controller
             try {
                 $files = $node->getById($fileId);
             } catch (\Exception $e) {
-                $this->logger->error("getFileByToken error: " . $e->getMessage(), ["app" => $this->appName]);
+                $this->logger->error("@@ DASH getFileByToken: $fileId " . $e->getMessage(), array("app" => $this->appName));
                 return [NULL, ("Invalid request"), NULL];
             }
 
@@ -329,8 +331,10 @@ class ViewerController extends Controller
                 return [NULL, ("File not found"), NULL];
             }
             $file = $files[0];
+            $this->logger->info("getFileByToken. instanceof if", array("app" => $this->appName));
         } else {
             $file = $node;
+            $this->logger->info("getFileByToken. instanceof else", array("app" => $this->appName));
         }
 
         return [$file, NULL, $share];
@@ -345,19 +349,23 @@ class ViewerController extends Controller
      */
     private function getNodeByToken($shareToken)
     {
+        $this->logger->error("@@ DASH getNodeByToken. st: $shareToken ", array("app" => $this->appName));
         list($share, $error) = $this->getShare($shareToken);
 
         if (isset($error)) {
+            $this->logger->error("@@DASH getNodeByToken. isset error ", array("app" => $this->appName));
             return [NULL, $error, NULL];
         }
 
         if (($share->getPermissions() & Constants::PERMISSION_READ) === 0) {
+            $this->logger->error("@@DASH getNodeByToken. getPermissions error ", array("app" => $this->appName));
             return [NULL, ("You do not have enough permissions to view the file"), NULL];
         }
 
         try {
             $node = $share->getNode();
         } catch (NotFoundException $e) {
+            $this->logger->error("@@DASH getNodeByToken. NotFoundException error ", array("app" => $this->appName));
             return [NULL, ("File not found"), NULL];
         }     
         return [$node, NULL, $share];
@@ -372,6 +380,7 @@ class ViewerController extends Controller
      */
     private function getShare($shareToken)
     {
+        $this->logger->error("@@DASH getShare. st: $shareToken ", array("app" => $this->appName));
         if (empty($shareToken)) {
             return [NULL, ("FileId is empty")];
         }
@@ -380,10 +389,12 @@ class ViewerController extends Controller
         try {
             $share = $this->shareManager->getShareByToken($shareToken);
         } catch (ShareNotFound $e) {
+            $this->logger->error("@@DASH getShare error: " . $e->getMessage(), array("app" => $this->appName));
             $share = NULL;
         }
 
         if ($share === NULL || $share === false) {
+            $this->logger->error("@@DASH getShare noshare ", array("app" => $this->appName));
             return [NULL, ("You do not have enough permissions to view the file")];
         }
 
@@ -392,8 +403,10 @@ class ViewerController extends Controller
             && (!$this->session->exists("public_link_authenticated")
                 || $this->session->get("public_link_authenticated") !== (string) $share->getId())
         ) {
+            $this->logger->error("@@DASH getShare: " . "You do not have enough permissions to view the file", array("app" => $this->appName));
             return [NULL, ("You do not have enough permissions to view the file")];
         }
+        $this->logger->error("@@DASH getShare was OK ", array("app" => $this->appName));
 
         return [$share, NULL];
     }

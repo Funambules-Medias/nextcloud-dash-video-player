@@ -173,6 +173,10 @@ class PlayerController extends Controller
             
             $videoUrl = "$protocol://$host$baseUri$encodedRelativePath";
 
+            $this->logger->error("PlayerController Debug: relativePath=" . $relativePath, ["app" => $this->appName]);
+            $this->logger->error("PlayerController Debug: encodedRelativePath=" . $encodedRelativePath, ["app" => $this->appName]);
+            $this->logger->error("PlayerController Debug: videoUrl=" . $videoUrl, ["app" => $this->appName]);
+
             $coverUrl = "";
             if (strpos($videoUrl, '.mpd') !== false)
                 $coverUrl = str_replace(".mpd", ".jpg", $videoUrl);
