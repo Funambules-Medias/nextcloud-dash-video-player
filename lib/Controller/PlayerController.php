@@ -192,27 +192,8 @@ class PlayerController extends Controller
                 return $this->createStandalonePlayerResponse($params);
             }
         
-            $response = new TemplateResponse($this->appName, "player", $params);
-
-            $csp = new ContentSecurityPolicy();
-            $csp->addAllowedScriptDomain("'unsafe-inline'");
-            $csp->addAllowedScriptDomain('blob:');
-            $csp->addAllowedScriptDomain('data:');
-            $csp->addAllowedConnectDomain('*');
-            $csp->addAllowedConnectDomain('blob:');
-            $csp->addAllowedConnectDomain('data:');
-            $csp->addAllowedImageDomain('*');
-            $csp->addAllowedImageDomain('blob:');
-            $csp->addAllowedImageDomain('data:');
-            $csp->addAllowedMediaDomain('*');
-            $csp->addAllowedMediaDomain('blob:');
-            $csp->addAllowedMediaDomain('data:');
-            $csp->addAllowedFontDomain('*');
-            $csp->addAllowedFontDomain('blob:');
-            $csp->addAllowedFontDomain('data:');
-            $response->setContentSecurityPolicy($csp);
-
-            return $response;
+            // For logged-in users, also use standalone HTML for consistent UI
+            return $this->createStandalonePlayerResponse($params);
 
         } catch (\Throwable $e) {
             $this->logger->error("PlayerController Index Error: " . $e->getMessage() . "\n" . $e->getTraceAsString(), ["app" => $this->appName]);
