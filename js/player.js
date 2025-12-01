@@ -1,6 +1,4 @@
 (function() {
-    console.log('DASHVIDEOPLAYERV2: player.js loaded');
-
     async function init() {
         if (window.dashVideoPlayerInitialized) {
             console.log('DASHVIDEOPLAYERV2: Already initialized, skipping');
@@ -14,10 +12,45 @@
             return;
         }
 
-        const manifestUri = video.getAttribute('data-manifest-url');
-        const subtitlesUrl = video.getAttribute('data-subtitles-url');
+        const manifestUri = video.getAttribute('data-stream-url');
+        const subtitlesListJson = video.getAttribute('data-subtitles-list');
+        const shareToken = video.getAttribute('data-share-token');
+        const posterUrl = video.getAttribute('data-poster-url');
+        
+        // Parse subtitles list
+        let subtitlesList = [];
+        try {
+            if (subtitlesListJson) {
+                subtitlesList = JSON.parse(subtitlesListJson);
+            }
+        } catch (e) {
+            console.warn('DASHVIDEOPLAYERV2: Failed to parse subtitles list', e);
+        }
 
-        console.log('DASHVIDEOPLAYERV2: Initializing player with manifest:', manifestUri);
+        // Handle poster loading with auth if needed
+        /*
+        if (posterUrl) {
+            if (shareToken) {
+                try {
+                    const response = await fetch(posterUrl, {
+                        headers: {
+                            'Authorization': 'Basic ' + btoa(shareToken + ':')
+                        }
+                    });
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        video.poster = URL.createObjectURL(blob);
+                    } else {
+                        console.warn('DASHVIDEOPLAYERV2: Failed to load poster', response.status);
+                    }
+                } catch (e) {
+                    console.error('DASHVIDEOPLAYERV2: Error loading poster', e);
+                }
+            } else {
+                video.poster = posterUrl;
+            }
+        }
+        */
 
         // When using the UI, the player is made automatically by the UI object.
         const ui = video['ui'];
@@ -28,15 +61,22 @@
                 'time_and_duration',
                 'mute',
                 'volume',
-                'fullscreen',
                 'captions',
-                'quality'
+                'quality',
+                'fullscreen'
             ],
         };
         ui.configure(config);
 
         const controls = ui.getControls();
         const player = controls.getPlayer();
+
+        // Add auth filter if token exists (for public shares)
+        if (shareToken) {
+            player.getNetworkingEngine().registerRequestFilter(function(type, request) {
+                request.headers['Authorization'] = 'Basic ' + btoa(shareToken + ':');
+            });
+        }
 
         // Attach player and ui to the window to make it easy to access in the JS console.
         window.player = player;
@@ -50,10 +90,12 @@
         // This is an asynchronous process.
         try {
             await player.load(manifestUri);
-            console.log('DASHVIDEOPLAYERV2: Manifest loaded successfully');
             
-            if (subtitlesUrl) {
-                player.addTextTrackAsync(subtitlesUrl, 'fr-CA', 'subtitles');
+            // Add all discovered subtitle tracks
+            if (subtitlesList && subtitlesList.length > 0) {
+                for (const sub of subtitlesList) {
+                    await player.addTextTrackAsync(sub.url, sub.lang, 'subtitle', '', '', sub.label);
+                }
                 player.setTextTrackVisibility(true);
             }
             
@@ -75,10 +117,6 @@
                     switchInterval: 1
                 }
             });
-            console.log('DASHVIDEOPLAYERV2: Player configuration:', player.getConfiguration())
-
-            // This runs if the asynchronous load is successful.
-            console.log('DASHVIDEOPLAYERV2: The video has now been loaded!');
         } catch (error) {
             onPlayerError(error);
         }
@@ -118,10 +156,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         const video = document.getElementById('video');
         if (video && video['ui']) {
-            console.log('DASHVIDEOPLAYERV2: UI already loaded, initializing immediately');
             init();
-        } else {
-            console.log('DASHVIDEOPLAYERV2: Waiting for shaka-ui-loaded event');
         }
     });
 

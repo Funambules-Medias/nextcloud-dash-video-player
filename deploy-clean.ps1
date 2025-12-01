@@ -46,15 +46,15 @@ New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
 # Copier les fichiers nécessaires
 $filesToInclude = @(
     "appinfo",
-    "bin",
     "css",
     "img",
     "js",
     "lib",
     "templates",
-    "COPYING",
-    "README.md",
     "CHANGELOG.md"
+    "composer.json",
+    "LICENSE",
+    "README.md"
 )
 
 foreach ($item in $filesToInclude) {
