@@ -1,149 +1,205 @@
-/* Reset body and html to remove Nextcloud theme margins and backgrounds */
-html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background-color: black !important;
-    overflow: hidden !important;
+/*  ==========================================================================
+    1. NETTOYAGE & INTÉGRATION NEXTCLOUD (RESET)
+    But : Cacher l'interface de Nextcloud pour ne voir que le lecteur vidéo.
+    ========================================================================== */
+
+/* Force le corps de la page à prendre tout l'écran sans marges */
+html,
+body {
+	margin: 0 !important;
+	padding: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	background-color: black !important; /* Couleur de fond derrière la vidéo */
+	overflow: hidden !important; /* Empêche les barres de défilement (scrollbars) */
 }
 
-/* Hide Nextcloud Header and Navigation to show only the player */
-header, #header, .header, #appmenu, .app-menu {
-    display: none !important;
+/* Cache l'en-tête, le menu et la navigation de Nextcloud */
+/* NOTE : Ne pas modifier sauf si vous voulez réafficher le menu Nextcloud */
+header,
+#header,
+.header,
+#appmenu,
+.app-menu {
+	display: none !important;
 }
 
 #content-wrapper {
-    padding-top: 0 !important;
+	padding-top: 0 !important;
 }
 
 #content {
-    margin-top: 0 !important;
-    height: 100vh !important;
-    overflow: hidden !important;
+	margin-top: 0 !important;
+	height: 100vh !important;
+	overflow: hidden !important;
 }
 
+/* Le conteneur principal de la vidéo */
 .shakaPlayerVideo {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 0;
-    background-color: black;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	background-color: black; /* Couleur de fond si la vidéo ne remplit pas l'écran (ratio différent) */
 }
 
-/* Fix alignment of progress bar and volume dots */
+/*  ==========================================================================
+    2. BARRE DE PROGRESSION (Timeline)
+    But : Affiner la barre de temps et cacher le gros point blanc (thumb).
+    ========================================================================== */
+
+/* Conteneur de la barre */
 .shaka-range-container {
-    display: flex !important;
-    align-items: center !important;
-    height: 30px !important;
-    margin: 0 10px !important;
-    top: 0 !important;
+	display: flex !important;
+	align-items: center !important;
+	height: 30px !important; /* MODIFIER ICI : Augmenter pour une zone cliquable plus grande */
+	margin: 0 10px !important;
+	top: 0 !important;
 }
 
+/* La barre elle-même (la ligne) */
 .shaka-range-element {
-    height: 4px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    background: transparent !important;
-    align-self: center !important;
+	height: 4px !important; /* MODIFIER ICI : Épaisseur de la ligne de temps (ex: 6px pour plus épais) */
+	padding: 0 !important;
+	margin: 0 !important;
+	border: none !important;
+	background: transparent !important;
+	align-self: center !important;
 }
 
-/* Hide the thumb (white dot) */
+/* Cache le curseur/point (Thumb) pour Chrome/Safari */
 .shaka-range-element::-webkit-slider-thumb {
-    opacity: 0 !important;
-    border: none !important;
-    width: 0 !important;
-    height: 0 !important;
+	opacity: 0 !important; /* Mettre à 1 pour réafficher le point */
+	border: none !important;
+	width: 0 !important; /* Mettre une taille (ex: 10px) pour réafficher */
+	height: 0 !important;
 }
 
+/* Cache le curseur/point (Thumb) pour Firefox */
 .shaka-range-element::-moz-range-thumb {
-    opacity: 0 !important;
-    border: none !important;
-    width: 0 !important;
-    height: 0 !important;
+	opacity: 0 !important;
+	border: none !important;
+	width: 0 !important;
+	height: 0 !important;
 }
 
-/* Fix button icon alignment */
+/*  ==========================================================================
+    3. BARRE DE CONTRÔLES & BOUTONS
+    But : Gérer l'alignement des icônes et le fond sombre (Scrim).
+    ========================================================================== */
+
+/* Alignement centré des icônes dans les boutons */
 .shaka-controls-button-panel button {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
 }
 
 .shaka-controls-button-panel .material-icons-round {
-    line-height: 1 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+	line-height: 1 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
 }
 
-/* Add darker scrim behind controls for better visibility of white icons */
-.shaka-controls-container[shown=true] .shaka-scrim-container {
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 30%, transparent 60%) !important;
+/* Le dégradé sombre derrière les boutons (Scrim) pour qu'on les voie sur une vidéo claire */
+.shaka-controls-container[shown="true"] .shaka-scrim-container {
+	/* MODIFIER LE DÉGRADÉ ICI :
+        - 0.8 = très sombre en bas
+        - 0.4 = semi-transparent au milieu
+        - transparent = invisible en haut
+    */
+	background: linear-gradient(
+		to top,
+		rgba(0, 0, 0, 0.8) 0%,
+		rgba(0, 0, 0, 0.4) 30%,
+		transparent 60%
+	) !important;
 }
 
-/* Force consistent control bar height */
 .shaka-bottom-controls {
-    padding-bottom: 10px !important; /* Fixed pixel padding instead of percentage */
+	padding-bottom: 10px !important; /* Espace sous les boutons */
 }
 
-/* Fix settings menu positioning and colors */
+/*  ==========================================================================
+    4. MENUS DE PARAMÈTRES (Roue dentée / Langues)
+    But : Personnaliser l'apparence des menus contextuels.
+    ========================================================================== */
+
 .shaka-settings-menu,
 .shaka-overflow-menu {
-    /* Use fixed pixel positioning - menus appear above buttons consistently */
-    bottom: 75px !important; /* Fixed distance from bottom of container */
-    top: auto !important; /* Override any top positioning */
-    right: 15px !important;  /* Align to the right edge */
-    left: auto !important; /* Override any left positioning */
-    position: absolute !important;
-    z-index: 1000 !important;
-    background: rgba(28, 28, 28, 0.95) !important; /* Dark gray background */
-    border-radius: 4px !important;
-    color: white !important; /* Force white text */
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    max-height: calc(100vh - 120px) !important; /* Prevent overflow */
-    transform: none !important; /* Disable any transform positioning */
+	/* POSITIONNEMENT */
+	bottom: 75px !important; /* Distance du bas (pour être au-dessus de la barre de contrôle) */
+	right: 15px !important; /* Distance de la droite */
+	top: auto !important;
+	left: auto !important;
+	position: absolute !important;
+	z-index: 1000 !important;
+
+	/* STYLE VISUEL DU MENU */
+	background: rgba(28, 28, 28, 0.95) !important; /* Fond gris très foncé, presque opaque (0.95) */
+	border-radius: 4px !important; /* Arrondi des coins */
+	color: white !important; /* Couleur du texte */
+	border: 1px solid rgba(255, 255, 255, 0.1) !important; /* Fine bordure blanche subtile */
+
+	/* GESTION DE LA TAILLE */
+	max-height: calc(100vh - 120px) !important;
+	transform: none !important;
 }
 
+/* Boutons à l'intérieur du menu */
 .shaka-settings-menu button,
 .shaka-overflow-menu button {
-    color: white !important;
-    background: transparent !important;
+	color: white !important;
+	background: transparent !important;
 }
 
+/* Effet au survol de la souris (Hover) dans le menu */
 .shaka-settings-menu button:hover,
 .shaka-overflow-menu button:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
+	background: rgba(255, 255, 255, 0.1) !important; /* Devient légèrement plus clair */
 }
 
+/* Couleur des icônes dans le menu */
 .shaka-settings-menu i.material-icons-round,
 .shaka-overflow-menu i.material-icons-round {
-    color: white !important;
+	color: white !important;
 }
 
-/* Ensure specific menus are also handled if they have specific classes */
-.shaka-resolutions, .shaka-text-languages {
-    max-height: 60vh !important; /* Prevent menu from being too tall */
-    overflow-y: auto !important;
+/* Ascenseur (scroll) pour les longues listes de résolutions ou langues */
+.shaka-resolutions,
+.shaka-text-languages {
+	max-height: 60vh !important; /* Limite la hauteur à 60% de l'écran */
+	overflow-y: auto !important;
 }
 
-/* Move subtitles up to resemble YouTube style */
+/*  ==========================================================================
+    5. SOUS-TITRES (STYLE YOUTUBE)
+    But : Rendre les sous-titres lisibles sans fond noir rectangulaire.
+    ========================================================================== */
+
+/* Positionnement du bloc de sous-titres */
 .shaka-text-container {
-    bottom: 12% !important; /* Move up from the very bottom */
+	bottom: 10% !important; /* MODIFIER ICI : Plus le % est élevé, plus le texte monte */
 }
 
-/* Style the text itself to look more like YouTube */
+/* Style du texte des sous-titres */
 .shaka-text-container span {
-    background-color: transparent !important; /* No background */
-    /* Thicker and smoother outline using multiple shadows */
-    text-shadow: 
-        3px 0 0 #000, -3px 0 0 #000, 0 3px 0 #000, 0 -3px 0 #000,
-        2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000,
-        1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000 !important;
-    font-family: Roboto, Arial, sans-serif !important;
-    font-weight: bold !important; /* Bold text helps with the outline look */
+	background-color: transparent !important; /* Enlève le rectangle noir par défaut derrière le texte */
+
+	/* CONTOUR NOIR (Outline)
+        Ceci crée un contour noir solide autour du texte blanc pour la lisibilité.
+        Pour un contour plus fin, réduire les pixels (ex: passer de 3px à 1px)
+    */
+	text-shadow: 3px 0 0 #000, -3px 0 0 #000, 0 3px 0 #000, 0 -3px 0 #000, 2px 2px 0 #000,
+		-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 1px 1px 0 #000, -1px -1px 0 #000,
+		1px -1px 0 #000, -1px 1px 0 #000 !important;
+
+	font-family: Roboto, Arial, sans-serif !important; /* Police d'écriture */
+	font-weight: bold !important; /* Gras : essentiel pour que le contour soit joli */
+	/* color: yellow !important;  <-- DÉCOMMENTER pour changer la couleur du texte en jaune */
+	/* font-size: 20px !important; <-- DÉCOMMENTER pour forcer une taille spécifique */
 }
