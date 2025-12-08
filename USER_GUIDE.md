@@ -22,15 +22,24 @@ The player uses **Shaka Player** to ensure a smooth experience:
 
 ## 2. Sharing a Video (Public)
 
-You can share a video with external users:
+You can share a video with people who do not have a Nextcloud account.
 
-1. In **Files**, click the **Share** icon next to the `.mpd` file **or** the parent folder.
-2. Create a **Public Link**.
-3. Send this link to your recipient.
+### Steps
+
+1. In **Files**, share the **entire folder** that contains:
+    - the `.mpd` and/or `.m3u8` manifest,
+    - the associated video segments,
+    - and, if present, the subtitle files.
+2. Create a **public link** for this folder.
+3. Send the link to your recipient.
 
 **Important:** The public link works when the **full folder** containing the required files is shared. Sharing only the file may not enable playback.
 
-When they open the link, the **Public Viewer** will launch automatically, allowing them to watch the video with the same quality options available to you.
+### On the recipient side
+
+1. The recipient opens the public folder link.
+2. They **click the file** `Film.mpd` or `Film.m3u8`.
+3. The player opens and the video can be watched.
 
 ## 3. Quick Troubleshooting
 

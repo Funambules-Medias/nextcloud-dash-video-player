@@ -22,15 +22,24 @@ Le lecteur utilise **Shaka Player** pour offrir une expérience fluide :
 
 ## 2. Partager une vidéo (Public)
 
-Vous pouvez partager une vidéo avec des personnes n'ayant pas de compte :
+Vous pouvez partager une vidéo avec des personnes n'ayant pas de compte Nextcloud.
 
-1. Dans **Fichiers**, cliquez sur l'icône de **Partage** à côté du fichier `.mpd` **ou** du dossier parent.
-2. Créez un **lien public**.
+### Étapes
+
+1. Dans **Fichiers**, partagez **le dossier complet** qui contient :
+    - le manifeste `.mpd` et/ou `.m3u8`,
+    - les segments vidéo associés,
+    - et, s’il y en a, les sous-titres.
+2. Créez un **lien public** sur ce dossier.
 3. Envoyez ce lien à votre destinataire.
 
 **Important :** Le lien public fonctionne lorsque le **dossier complet** contenant les fichiers nécessaires est partagé. Le partage du seul fichier peut ne pas permettre la lecture.
 
-Lorsqu'il ouvrira le lien, le **Viewer Public** se lancera automatiquement, lui permettant de regarder la vidéo avec les mêmes options de qualité que vous.
+### Côté visiteur
+
+1. Le visiteur ouvre le lien public du dossier.
+2. Il **clique sur le fichier** `Film.mpd` ou `Film.m3u8`.
+3. Le lecteur s’ouvre et la vidéo peut être visionnée.
 
 ## 3. Dépannage rapide
 
