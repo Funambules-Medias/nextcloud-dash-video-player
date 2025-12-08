@@ -1,12 +1,13 @@
-# Dash Video Player v2 (PFE)
+# PLAYER (PFE)
 
 A Nextcloud application integrating **Shaka Player** for native playback of adaptive video streams (MPEG-DASH and HLS) directly from the Files interface.
 
 ## 🌟 Features
 
 * **Adaptive Playback:** Supports `.mpd` (DASH) and `.m3u8` (HLS) manifests.
-* **Native Integration:** Opens directly upon clicking a file in the Files app.
-* **Public Support:** Enables video playback via Nextcloud public share links (no account required).
+* **Native Integration:** Opens directly upon clicking a file in the Files app (in a dedicated player view).
+* **Exit the player:** Clicking outside the player area closes/exits the viewer.
+* **Public Support:** Enables playback via a public share link **when the full folder** containing the required video/manifests is shared (sharing only the file may not work).
 * **Subtitles:** Automatic detection and loading of associated subtitles.
 * **Performance:** Uses `mux.js` for extended compatibility.
 
@@ -20,9 +21,15 @@ A Nextcloud application integrating **Shaka Player** for native playback of adap
 
 ## 📋 Prerequisites
 
-* Nextcloud 24 to 32.
+* **Tested on Nextcloud 32.**
 * Transcoded video files (via the *Video Converter* module).
 
 ## 👥 Authors
+
 * Daniel Figueroa J (Original author)
-* PFE Team (v2 Update and Refactor)
+* PFE Team (v2 update and refactor):
+    * Simon Bigonnesse
+    * Abdessamad Cherifi
+    * Clément Deffes
+    * Nicolas Thibodeau (Team lead)
+    * Supervised by **Stéphane Coulombe** (Professor)

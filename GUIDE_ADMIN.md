@@ -1,50 +1,66 @@
-# Guide d'Administration & Installation
+# Guide d'Administration & Installation — PLAYER
+
+Ce guide est destiné à la personne qui déploie l’application **PLAYER** sur une instance Nextcloud.
 
 ## 📦 Installation
 
 ### 1. Déploiement
-Cloner le dépôt dans le dossier `apps` de votre instance Nextcloud.
-**Important :** Le dossier de destination DOIT se nommer `dashvideoplayerv2` pour correspondre à l'ID de l'application.
 
-```bash
-cd /var/www/nextcloud/apps
-# Le dossier cible DOIT s'appeler 'dashvideoplayerv2' pour correspondre à l'ID de l'app
-git clone [VOTRE_URL_GIT_ICI] dashvideoplayerv2
-chown -R www-data:www-data dashvideoplayerv2
-```
+Cloner le dépôt dans le dossier `apps` de votre instance Nextcloud.
+
+**Important :** Le dossier de destination doit se nommer **`dashvideoplayerv2`** pour correspondre à l’ID de l’application déclaré dans `info.xml`.
+
+> cd /var/www/nextcloud/apps
+>
+> git clone https://github.com/Funambules-Medias/nextcloud-dash-video-player dashvideoplayerv2
+> 
+> chown -R www-data:www-data dashvideoplayerv2
+
 
 ### 2. Activation
-Activer l'application via la ligne de commande.
 
-```bash
-# L'ID est 'dashvideoplayerv2' (confirmé par info.xml)
-sudo -u www-data php /var/www/nextcloud/occ app:enable dashvideoplayerv2
-```
+Activer l’application via `occ`.
 
-### 3. Mise à jour des Mime-Types
-L'application enregistre de nouveaux types de fichiers (`application/dash+xml` et `application/x-mpegURL`). Pour que Nextcloud les reconnaisse correctement, il est **fortement recommandé** de mettre à jour la base de données des types MIME après l'installation :
+> sudo -u www-data php /var/www/nextcloud/occ app:enable dashvideoplayerv2
 
-```bash
-# Met à jour la base de données pour inclure .mpd et .m3u8
-sudo -u www-data php /var/www/nextcloud/occ maintenance:mimetype:update-db
+### 3. Mise à jour des mime-types
 
-# Met à jour le mapping JS pour que l'icône et l'action s'affichent dans le navigateur
-sudo -u www-data php /var/www/nextcloud/occ maintenance:mimetype:update-js
-```
+L’application enregistre des types de fichiers associés à `.mpd` et `.m3u8`. Pour s’assurer que Nextcloud reconnaît correctement ces fichiers dans l’interface, une mise à jour de la base des mime-types peut être nécessaire après l’installation.
+
+> sudo -u www-data php /var/www/nextcloud/occ maintenance:mimetype:update-db
+> 
+> sudo -u www-data php /var/www/nextcloud/occ maintenance:mimetype:update-js
 
 ---
 
-## 🛠️ Configuration & Dépannage
+## 🛠️ Dépannage
 
-### Configuration CORS (Stockage Externe)
-Si vos vidéos sont stockées sur un serveur externe (S3, MinIO, FTP), vous devez configurer les en-têtes CORS sur ce serveur pour autoriser votre domaine Nextcloud. Sans cela, le lecteur affichera une erreur réseau.
+### Le lecteur ne s’ouvre pas
 
-**En-têtes requis :**
-* `Access-Control-Allow-Origin: https://votre-nextcloud.com`
-* `Access-Control-Allow-Methods: GET, HEAD, OPTIONS`
+Si le clic sur un fichier `.mpd` ou `.m3u8` **télécharge le fichier** au lieu d’ouvrir le lecteur :
 
-### Dépannage : Le lecteur ne s'ouvre pas
-Si le clic sur un fichier `.mpd` télécharge le fichier au lieu d'ouvrir le lecteur :
-1.  Vérifiez que l'application `dashvideoplayerv2` est bien activée.
-2.  Relancez les commandes de mise à jour des mimetypes (voir section Installation).
-3.  Videz le cache du navigateur.
+1. Vérifiez que l’application `dashvideoplayerv2` est bien activée.
+2. Vérifiez que les mime-types ont bien été pris en compte côté serveur.
+3. Videz le cache du navigateur.
+
+### Partage public
+
+Si un lien de partage public entraîne un téléchargement direct du manifeste plutôt que l’ouverture du lecteur, vérifiez aussi que le **dossier complet** contenant les fichiers nécessaires est partagé (et pas uniquement le fichier). Cette configuration est décrite dans le guide utilisateur.
+
+---
+
+## 📋 Compatibilité
+
+Application **testée sur Nextcloud 32**.
+
+---
+
+## 👥 Équipe
+
+Projet PFE réalisé par :
+- Simon Bigonnesse
+- Abdessamad Cherifi
+- Clément Deffes
+- Nicolas Thibodeau (chef d’équipe)
+
+Sous la supervision de **Stéphane Coulombe**.
