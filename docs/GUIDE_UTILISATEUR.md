@@ -1,4 +1,4 @@
-# Guide Utilisateur - PLAYER (v2)
+# Guide Utilisateur - PLAYER
 
 Ce module permet de visionner les vidéos transcodées directement dans votre navigateur, en ajustant automatiquement la qualité selon votre connexion.
 
@@ -10,6 +10,8 @@ Pour regarder une vidéo depuis votre compte Nextcloud :
 2. Naviguez vers le dossier contenant votre vidéo convertie.
 3. Repérez le fichier de manifeste **`.mpd`** (DASH) ou **`.m3u8`** (HLS).
 4. **Cliquez sur le fichier** : le lecteur s'ouvre automatiquement dans une vue dédiée.
+
+![Video Player](docs/screenshot/screenshot.png)
 
 ### Fonctionnalités du lecteur
 

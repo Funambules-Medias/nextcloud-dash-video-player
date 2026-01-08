@@ -5,9 +5,9 @@ services:
     ports:
       - 17210:80
     environment:
-      SERVER_BRANCH: "v27.0.1"
+      SERVER_BRANCH: "v32.0.1"
     volumes:
-      - ./:/var/www/html/apps-extra/dashvideoplayer
+      - ./:/var/www/html/apps-extra/dashvideoplayerv2
       #      - ./deployment/dev/data-seed:/seeds
       #      - ./deployment/dev/hooks:/shared/hooks/
       #- nextcloud-config:/var/www/html/config
@@ -19,6 +19,7 @@ services:
       - T:\Temp\nc\data:/var/www/html/data
       #- T:\Temp\nc\html:/var/www/html
       - T:\Temp\nc\apps-wr:/var/www/html/apps-writable
+      - T:\Temp\nc\varlog:/var/log
       #Binds misc
       #- N:\ETS\VideoSamples:/var/www/html/data/admin/files/samples
 

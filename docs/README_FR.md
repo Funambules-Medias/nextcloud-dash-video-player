@@ -1,6 +1,13 @@
-# PLAYER (PFE)
+# Nextcloud Dash Video Player
+
+**Languages:** [English](README.md) | [Français](docs/README_FR.md)
 
 Une application Nextcloud intégrant **Shaka Player** pour la lecture native de flux vidéo adaptatifs (MPEG-DASH et HLS) directement depuis l'interface de fichiers.
+
+| Document                                  | Description                           |
+|-------------------------------------------|---------------------------------------|
+| [Guide admin](GUIDE_ADMIN.md)             | Installation et configuration serveur |
+| [Guide utilisateur](GUIDE_UTILISATEUR.md) | Guide d'utilisation                   |
 
 ## 🌟 Fonctionnalités
 
