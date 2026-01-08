@@ -11,7 +11,7 @@ Pour regarder une vidéo depuis votre compte Nextcloud :
 3. Repérez le fichier de manifeste **`.mpd`** (DASH) ou **`.m3u8`** (HLS).
 4. **Cliquez sur le fichier** : le lecteur s'ouvre automatiquement dans une vue dédiée.
 
-![Video Player](docs/screenshot/screenshot.png)
+![Video Player](screenshot/screenshot.png)
 
 ### Fonctionnalités du lecteur
 
