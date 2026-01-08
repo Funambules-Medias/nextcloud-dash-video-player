@@ -9,6 +9,8 @@ A Nextcloud application integrating **Shaka Player** for native playback of adap
 | [Admin Guide](docs/ADMIN_GUIDE.md) | Server installation and configuration |
 | [User Guide](docs/USER_GUIDE.md) | How to use the application |
 
+![Video Player](docs/screenshot/screenshot.png)
+
 ## 🌟 Features
 
 * **Adaptive Playback:** Supports `.mpd` (DASH) and `.m3u8` (HLS) manifests.
