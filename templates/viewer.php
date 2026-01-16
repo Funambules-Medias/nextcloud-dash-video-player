@@ -1,7 +1,7 @@
 <?php
-style("dashvideoplayer", "player");
-//script("dashvideoplayer", "dash.all.min");
-script("dashvideoplayer", "shaka-player.compiled.min");
+style("dashvideoplayerv2", "player");
+//script("dashvideoplayerv2", "dash.all.min");
+script("dashvideoplayerv2", "shaka-player.compiled.min");
 ?>
 
 <div id="app-content">

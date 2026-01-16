@@ -1,19 +1,24 @@
 <?php
 
-namespace OCA\Dashvideoplayer\Controller;
+namespace OCA\Dashvideoplayerv2\Controller;
 
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\Template\PublicTemplateResponse;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\RedirectResponse;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Controller;
 use OCP\AutoloadNotAllowedException;
 use OCP\Constants;
 use OCP\Files\FileInfo;
 use OCP\Files\IRootFolder;
+use OCP\Files\Folder;
+use OCP\Files\NotFoundException;
+use OCP\Files\NotPermittedException;
 use OCP\IL10N;
-use OCP\ILogger;
+use Psr\Log\LoggerInterface;
 use OCP\IRequest;
 use OCP\ISession;
 use OCP\IURLGenerator;
@@ -29,7 +34,7 @@ use OCA\Files\Helper;
 use OCA\Files_Versions\Storage;
 use OCA\Viewer\Event\LoadViewer;
 
-use OCA\Dashvideoplayer\AppConfig;
+use OCA\Dashvideoplayerv2\AppConfig;
 
 
 class ViewerController extends Controller
@@ -62,7 +67,7 @@ class ViewerController extends Controller
      * @param IUserSession $userSession - current user session
      * @param IURLGenerator $urlGenerator - url generator service     
      * @param ILogger $logger - logger
-     * @param OCA\Dashvideoplayer\AppConfig $config - app config
+     * @param AppConfig $config - app config
      */
     public function __construct(
         $AppName,
@@ -70,7 +75,7 @@ class ViewerController extends Controller
         IRootFolder $root,
         IUserSession $userSession,
         IURLGenerator $urlGenerator,
-        ILogger $logger,
+        LoggerInterface $logger,
         AppConfig $config,
         IManager $shareManager,
         ISession $session,
@@ -149,7 +154,7 @@ class ViewerController extends Controller
 
         */
 
-        $baseUri = \OC::$WEBROOT . '/index.php/s/'. $shareToken.'/download';
+        $baseUri = $this->urlGenerator->getWebroot() . '/index.php/s/'. $shareToken.'/download';
         //$baseUri = \OC::$WEBROOT . '/public.php/webdav';
         //$videoUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$baseUri$relativePath";
         $videoUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$baseUri";
@@ -185,7 +190,7 @@ class ViewerController extends Controller
 
 
         $csp = new ContentSecurityPolicy();
-        $csp->allowInlineScript(true);
+        $csp->addAllowedScriptDomain("'unsafe-inline'");
         $csp->addAllowedScriptDomain('*');
         $csp->addAllowedFrameDomain('*');
         $csp->addAllowedFrameDomain("blob:");

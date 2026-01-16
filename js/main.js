@@ -1,23 +1,38 @@
 (function (OCA) {
-  OCA.Dashvideoplayer = _.extend({}, OCA.Dashvideoplayer);
+  OCA.Dashvideoplayerv2 = _.extend({}, OCA.Dashvideoplayerv2);
 
   OCA.AppSettings = null;
-  OCA.Dashvideoplayer.Mimes = [];
+  OCA.Dashvideoplayerv2.Mimes = null;
 
-  if (!OCA.Dashvideoplayer.AppName) {
-    OCA.Dashvideoplayer = {
-      AppName: "dashvideoplayer",
+  if (!OCA.Dashvideoplayerv2.AppName) {
+    OCA.Dashvideoplayerv2 = {
+      AppName: "dashvideoplayerv2",
       frameSelector: null
     };
   }
 
-  OCA.Dashvideoplayer.OpenPlayer = function (fileId, filePath) {
+  OCA.Dashvideoplayerv2.OpenPlayer = function (fileId, filePath) {
     var url = OC.generateUrl(
-      "/apps/" + OCA.Dashvideoplayer.AppName + "/{fileId}",
+      "/apps/" + OCA.Dashvideoplayerv2.AppName + "/{fileId}",
       {
         fileId: fileId
       }
     );
+
+    // Check for public share token
+    var shareToken = $('#sharingToken').val();
+    
+    // Fallback: try to get from URL /s/{token}
+    if (!shareToken) {
+        var match = /\/s\/([a-zA-Z0-9]+)/.exec(window.location.pathname);
+        if (match) {
+            shareToken = match[1];
+        }
+    }
+
+    if (shareToken) {
+        url += '?shareToken=' + encodeURIComponent(shareToken);
+    }
     
      /*window.open(url, "Dash Player", "width=1200, height=600");
      return*/
@@ -79,8 +94,17 @@
         "style",
         "display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; cursor: pointer;"
       );
+      
+      // Close modal when clicking outside the iframe
+      divModalContainer.onclick = function(e) {
+          if (e.target === divModalContainer) {
+            document.getElementById("iframeDashPlayerModal").src = "about:blank";
+            document.getElementById('divDashPlayerModal').style.display = "none";
+          }
+      };
+
       divModalContainer.innerHTML =
-        "<iframe id='iframeDashPlayerModal' width='75%' height='75%' src='" + url + "'></iframe>";
+        "<iframe id='iframeDashPlayerModal' width='75%' height='75%' style='border:0; border-radius: 8px; background-color: black; box-shadow: 0 0 20px rgba(0,0,0,0.5);' src='" + url + "'></iframe>";
 
       // append modal container to modal wrapper
       divModalWrapper.appendChild(divModalContainer);
@@ -99,12 +123,40 @@
     }
   };
 
-  OCA.Dashvideoplayer.GetSettings = function (callbackSettings) {
-    if (OCA.Dashvideoplayer.Mimes) {
+  OCA.Dashvideoplayerv2.GetSettings = function (callbackSettings) {
+    // Check if we are in a public share context
+    var isPublic = $('#isPublic').val() === '1';
+    var shareToken = $('#sharingToken').val();
+    
+    // Also check URL for /s/{token} pattern
+    if (!shareToken) {
+        var match = /\/s\/([a-zA-Z0-9]+)/.exec(window.location.pathname);
+        if (match) {
+            shareToken = match[1];
+            isPublic = true;
+        }
+    }
+
+    // Check for shareToken in URL query params (for player iframe)
+    if (!shareToken) {
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('shareToken')) {
+            shareToken = urlParams.get('shareToken');
+            isPublic = true;
+        }
+    }
+
+    if (OCA.Dashvideoplayerv2.Mimes) {
       callbackSettings();
+    } else if (isPublic || shareToken) {
+        OCA.Dashvideoplayerv2.Mimes = {
+            "mpd": {"mime": "application/mpd", "type": "video"},
+            "m3u8": {"mime": "application/m3u8", "type": "video"}
+        };
+        callbackSettings();
     } else {
       var url = OC.generateUrl(
-        "apps/" + OCA.Dashvideoplayer.AppName + "/ajax/settings"
+        "apps/" + OCA.Dashvideoplayerv2.AppName + "/ajax/settings"
       );
 
       fetch(url, {
@@ -117,48 +169,57 @@
       })
         .then(function (response) {
           if (response.status !== 200) {
-            console.log("Fetch error. Status Code: " + response.status);
+            // Fallback for public shares or errors
+            OCA.Dashvideoplayerv2.Mimes = {
+                "mpd": {"mime": "application/mpd", "type": "video"},
+                "m3u8": {"mime": "application/m3u8", "type": "video"}
+            };
+            callbackSettings();
             return;
           }
 
           response.json().then(function (data) {
             OCA.AppSettings = data.settings;
-            OCA.Dashvideoplayer.Mimes = data.formats;
+            OCA.Dashvideoplayerv2.Mimes = data.formats;
             callbackSettings();
           });
         })
         .catch(function (err) {
-          console.log("Fetch Error: ", err);
+            // Fallback for network errors
+            OCA.Dashvideoplayerv2.Mimes = {
+                "mpd": {"mime": "application/mpd", "type": "video"},
+                "m3u8": {"mime": "application/m3u8", "type": "video"}
+            };
+            callbackSettings();
         });
     }
   };
 
-  OCA.Dashvideoplayer.FileList = {
+  OCA.Dashvideoplayerv2.FileList = {
     attach: function (fileList) {
       if (fileList.id == "trashbin") {
         return;
       }
 
       var registerfunc = function () {
-        console.log("OCA.Dashvideoplayer.Mimes: ", OCA.Dashvideoplayer.Mimes);
-        if (typeof OCA.Dashvideoplayer.Mimes != "object") return;
+        if (typeof OCA.Dashvideoplayerv2.Mimes != "object") return;
 
-        for (const ext in OCA.Dashvideoplayer.Mimes) {
-          attr = OCA.Dashvideoplayer.Mimes[ext];
+        for (const ext in OCA.Dashvideoplayerv2.Mimes) {
+          attr = OCA.Dashvideoplayerv2.Mimes[ext];
           fileList.fileActions.registerAction({
             name: "mpdOpen",
-            displayName: t(OCA.Dashvideoplayer.AppName, "Play video 1"),
+            displayName: t(OCA.Dashvideoplayerv2.AppName, "Play video 1"),
             mime: attr.mime,
-            permissions: OC.PERMISSION_READ | OC.PERMISSION_UPDATE,
+            permissions: OC.PERMISSION_READ,
             icon: function () {
-              return OC.imagePath(OCA.Dashvideoplayer.AppName, "app");
+              return OC.imagePath(OCA.Dashvideoplayerv2.AppName, "app");
             },
             iconClass: "icon-mpd",
             actionHandler: function (fileName, context) {
               var fileInfoModel =
                 context.fileInfoModel ||
                 context.fileList.getModelForFile(fileName);
-              OCA.Dashvideoplayer.OpenPlayer(
+              OCA.Dashvideoplayerv2.OpenPlayer(
                 fileInfoModel.id,
                 OC.joinPaths(context.dir, fileName)
               );
@@ -174,11 +235,11 @@
         }
       };
 
-      OCA.Dashvideoplayer.GetSettings(registerfunc);
+      OCA.Dashvideoplayerv2.GetSettings(registerfunc);
     }
   };
 
-  OCA.Dashvideoplayer.DisplayError = function (error) {
+  OCA.Dashvideoplayerv2.DisplayError = function (error) {
     $("#app").text(error).addClass("error");
   };
 
@@ -190,14 +251,13 @@
   };
 
   var initPage = function () {
-    console.log("init.ispubic: ", $("#isPublic").val());
     if ($("#isPublic").val() === "1" && !$("#filestable").length) {
       var fileName = $("#filename").val();
       var mimeType = $("#mimetype").val();
       var extension = getFileExtension(fileName);
 
       var initSharedButton = function () {
-        var formats = OCA.Dashvideoplayer.Mimes;
+        var formats = OCA.Dashvideoplayerv2.Mimes;
         var config = formats[extension];
         if (!config) {
           return;
@@ -206,18 +266,281 @@
         var button = document.createElement("a");
         button.href = OC.generateUrl(
           "apps/" +
-            OCA.Dashvideoplayer.AppName +
+            OCA.Dashvideoplayerv2.AppName +
             "/s/" +
             encodeURIComponent($("#sharingToken").val())
         );
         button.className = "button";
-        button.innerText = t(OCA.Dashvideoplayer.AppName, "Play video");
+        button.innerText = t(OCA.Dashvideoplayerv2.AppName, "Play video");
         $("#preview").append(button);
       };
 
-      OCA.Dashvideoplayer.GetSettings(initSharedButton);
+      OCA.Dashvideoplayerv2.GetSettings(initSharedButton);
     } else {
-      OC.Plugins.register("OCA.Files.FileList", OCA.Dashvideoplayer.FileList);
+      var registerFileActions = function () {
+        // 1. Global Capture Event Listener (The "Hammer" approach)
+        if (!window.dashPlayerListenerAttached) {
+            document.addEventListener('click', function(e) {
+                var target = e.target;
+                
+                var row = null;
+                var current = target;
+                
+                // Walk up to find the file row
+                while (current && current !== document) {
+                    if (current.tagName === 'TR' || (current.classList && current.classList.contains('file-row')) || (current.classList && current.classList.contains('oc-dialog-filepicker__file'))) {
+                        row = current;
+                        break;
+                    }
+                    current = current.parentNode;
+                }
+                
+                if (row) {
+                    // 1. Get Filename
+                    var fileName = row.getAttribute('data-file');
+                    // Strategy: data-cy-files-list-row-name (Vue/Cypress)
+                    if (!fileName) fileName = row.getAttribute('data-cy-files-list-row-name');
+                    
+                    if (!fileName) {
+                        var nameEl = row.querySelector('.nametext, .innernametext, .name');
+                        if (nameEl) fileName = nameEl.innerText;
+                        else if (target.classList.contains('files-list__row-name-link')) fileName = target.innerText;
+                    }
+                    
+                    if (fileName) {
+                        fileName = fileName.replace(/[\n\r]+/g, '').trim(); // Clean up whitespace
+                    }
+                    
+                    if (!fileName) {
+                        return; // Not a valid file row
+                    }
+
+                    // 2. Get File ID (The hard part)
+                    var fileId = row.getAttribute('data-id');
+                    
+                    // Strategy: data-cy-files-list-row-fileid (Vue/Cypress)
+                    if (!fileId) fileId = row.getAttribute('data-cy-files-list-row-fileid');
+                    
+                    // Strategy A: Look for data-e2e-file-id (common in Vue)
+                    if (!fileId) fileId = row.getAttribute('data-e2e-file-id');
+                    
+                    // Strategy B: Look for any link with fileId in href
+                    if (!fileId) {
+                        var links = row.querySelectorAll('a[href*="fileId="], a[href*="fileid="]');
+                        if (links.length > 0) {
+                            var match = /fileId=(\d+)/i.exec(links[0].href);
+                            if (match) fileId = match[1];
+                        }
+                    }
+
+                    // Strategy C: Regex search the entire row HTML for anything looking like an ID
+                    if (!fileId) {
+                        var html = row.outerHTML;
+                        // Look for data-id="123" or fileId: 123
+                        var idMatch = /data-id="(\d+)"/.exec(html);
+                        if (idMatch) fileId = idMatch[1];
+                        
+                        if (!fileId) {
+                             idMatch = /fileId=(\d+)/.exec(html);
+                             if (idMatch) fileId = idMatch[1];
+                        }
+                    }
+                    
+                    // Strategy D: Check row ID (e.g. fileList_row_12345)
+                    if (!fileId && row.id) {
+                        var idParts = row.id.split('_');
+                        var lastPart = idParts[idParts.length - 1];
+                        if (/^\d+$/.test(lastPart)) {
+                            fileId = lastPart;
+                        }
+                    }
+
+                    if (fileName && (fileName.toLowerCase().endsWith('.mpd') || fileName.toLowerCase().endsWith('.m3u8'))) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+
+                        if (fileId) {
+                            OCA.Dashvideoplayerv2.OpenPlayer(fileId, null);
+                        } else {
+                            // WebDAV lookup for file ID
+                            var dir = '/';
+                            var urlParams = new URLSearchParams(window.location.search);
+                            if (urlParams.has('dir')) {
+                                dir = urlParams.get('dir');
+                            } else {
+                                var dirInput = document.getElementById('dir');
+                                if (dirInput) dir = dirInput.value;
+                            }
+                            
+                            // 2. Construct path
+                            var path = dir + '/' + fileName;
+                            path = path.replace('//', '/'); // Normalize
+                            
+                            var user = OC.getCurrentUser().uid;
+                            
+                            // Construct WebDAV URL
+                            // Format: /remote.php/dav/files/{user}/{path}
+                            var davUrl = OC.getRootPath() + '/remote.php/dav/files/' + encodeURIComponent(user);
+                            
+                            // Split and encode path components to handle spaces and special chars correctly
+                            var pathParts = path.split('/');
+                            for (var i = 0; i < pathParts.length; i++) {
+                                if (pathParts[i]) davUrl += '/' + encodeURIComponent(pathParts[i]);
+                            }
+                            
+                            var headers = {
+                                'Depth': '0',
+                                'Content-Type': 'application/xml'
+                            };
+                            
+                            // CRITICAL: Add CSRF Token
+                            if (OC.requestToken) {
+                                headers['requesttoken'] = OC.requestToken;
+                                headers['OCS-APIRequest'] = 'true';
+                            } else {
+                                console.warn("DASHVIDEOPLAYERV2: OC.requestToken is missing!");
+                            }
+
+                            // Explicitly request oc:id
+                            var body = '<?xml version="1.0"?>' +
+                                       '<d:propfind  xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">' +
+                                       '  <d:prop>' +
+                                       '    <oc:id />' +
+                                       '    <oc:fileid />' +
+                                       '  </d:prop>' +
+                                       '</d:propfind>';
+
+                            fetch(davUrl, {
+                                method: 'PROPFIND',
+                                headers: headers,
+                                body: body,
+                                credentials: 'same-origin'
+                            }).then(function(response) {
+                                if (response.ok) {
+                                    return response.text();
+                                }
+                                throw new Error('WebDAV lookup failed: ' + response.status);
+                            }).then(function(xmlText) {
+                                var parser = new DOMParser();
+                                var xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                                
+                                // 1. Try standard namespace method for oc:id
+                                var idNode = xmlDoc.getElementsByTagNameNS('http://owncloud.org/ns', 'id')[0];
+                                if (idNode) fileId = idNode.textContent;
+                                
+                                // 2. Try oc:fileid
+                                if (!fileId) {
+                                    idNode = xmlDoc.getElementsByTagNameNS('http://owncloud.org/ns', 'fileid')[0];
+                                    if (idNode) fileId = idNode.textContent;
+                                }
+
+                                // 3. Fallback: Regex on the text (ignores namespaces issues)
+                                if (!fileId) {
+                                    var match = /<oc:id>([^<]+)<\/oc:id>/.exec(xmlText);
+                                    if (match) fileId = match[1];
+                                }
+                                
+                                if (!fileId) {
+                                    var match = /<oc:fileid>([^<]+)<\/oc:fileid>/.exec(xmlText);
+                                    if (match) fileId = match[1];
+                                }
+
+                                if (fileId) {
+                                    OCA.Dashvideoplayerv2.OpenPlayer(fileId, null);
+                                } else {
+                                     console.error("DASHVIDEOPLAYERV2: Could not determine file ID from WebDAV response");
+                                }
+                            }).catch(function(err) {
+                                console.error("DASHVIDEOPLAYERV2: WebDAV lookup error", err);
+                                alert("Error: Could not determine file ID for " + fileName + ". See console for details.");
+                            });
+                        }
+                    }
+                }
+            }, true); // Capture phase!
+            window.dashPlayerListenerAttached = true;
+        }
+
+        // 2. Try New API (Nextcloud 28+)
+        if (window.Nextcloud && window.Nextcloud.Files && window.Nextcloud.Files.registerFileAction) {
+            var openDashPlayer = function(nodes) {
+                var node = nodes[0];
+                var fileId = node.fileId || node.id;
+                var fileName = node.name || node.basename;
+                var dir = node.path ? node.path.substring(0, node.path.lastIndexOf('/')) : '/';
+                
+                OCA.Dashvideoplayerv2.OpenPlayer(fileId, OC.joinPaths(dir, fileName));
+            };
+
+            // Register for each mime type
+            for (const ext in OCA.Dashvideoplayerv2.Mimes) {
+                var attr = OCA.Dashvideoplayerv2.Mimes[ext];
+                
+                window.Nextcloud.Files.registerFileAction({
+                    id: 'dashvideoplayerv2-open-' + ext,
+                    displayName: t(OCA.Dashvideoplayerv2.AppName, "Play video"),
+                    icon: 'icon-mpd',
+                    order: -100,
+                    enabled: function(nodes) {
+                        return nodes && nodes.length === 1 && nodes[0].mime === attr.mime;
+                    },
+                    exec: openDashPlayer
+                });
+            }
+        }
+
+        // 3. Legacy API
+        if (OCA.Files && OCA.Files.fileActions) {
+            var appName = OCA.Dashvideoplayerv2.AppName;
+            
+            // Iterate over your mimes
+            for (const ext in OCA.Dashvideoplayerv2.Mimes) {
+                var attr = OCA.Dashvideoplayerv2.Mimes[ext];
+                
+                OCA.Files.fileActions.registerAction({
+                    name: 'mpdOpen',
+                    displayName: t(appName, "Play video"),
+                    mime: attr.mime,
+                    permissions: OC.PERMISSION_READ,
+                    iconClass: 'icon-mpd', 
+                    actionHandler: function (fileName, context) {
+                        // Context handling for NC28+
+                        var dir = context.dir;
+                        if (!dir && context.fileList && context.fileList.getCurrentDirectory) {
+                                dir = context.fileList.getCurrentDirectory();
+                        }
+                        
+                        var fileId = context.fileId || (context.fileInfoModel ? context.fileInfoModel.id : null);
+                        
+                        // Fallback to get ID if missing
+                        if (!fileId && context.$file) {
+                            fileId = context.$file.attr('data-id');
+                        }
+
+                        if (fileId && dir) {
+                            OCA.Dashvideoplayerv2.OpenPlayer(
+                                fileId,
+                                OC.joinPaths(dir, fileName)
+                            );
+                        } else {
+                            console.error("DASHVIDEOPLAYERV2: Could not determine fileId or dir", {fileId, dir, context});
+                        }
+                    }
+                });
+
+                // Set default action if needed
+                if (attr.mime === "application/mpd" || attr.mime === "application/m3u8") {
+                    OCA.Files.fileActions.setDefault(attr.mime, 'mpdOpen');
+                }
+            }
+        }
+      };
+
+      // Wait for DOM and Settings
+      $(document).ready(function () {
+          OCA.Dashvideoplayerv2.GetSettings(registerFileActions);
+      });
     }
   };
 
@@ -228,7 +551,7 @@
  * A little bit of a hack - changing file icon...
  */
 $(document).ready(function () {
-  PluginDashvideoplayer_ChangeIconsNative = function () {
+  PluginDashvideoplayerv2_ChangeIconsNative = function () {
     $("#filestable")
       .find("tr[data-type=file]")
       .each(function () {
@@ -249,11 +572,11 @@ $(document).ready(function () {
       .add("#app-content-extstoragemounts")
       .on("changeDirectory", function (e) {
         if (OCA.AppSettings == null) return;
-        PluginDashvideoplayer_ChangeIconsNative();
+        PluginDashvideoplayerv2_ChangeIconsNative();
       })
       .on("fileActionsReady", function (e) {
         if (OCA.AppSettings == null) return;
-        PluginDashvideoplayer_ChangeIconsNative();
+        PluginDashvideoplayerv2_ChangeIconsNative();
       });
   }
 });

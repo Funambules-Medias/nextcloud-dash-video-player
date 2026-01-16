@@ -1,7 +1,8 @@
 <?php
 
-namespace OCA\Dashvideoplayer\Migration;
+namespace OCA\Dashvideoplayerv2\Migration;
 
+use OCP\Migration\IOutput;
 use OCP\Files\IMimeTypeLoader;
 use OCP\Migration\IRepairStep;
 
